@@ -1,0 +1,25 @@
+query RunInput {
+  cart {
+    lines {
+      id
+      merchandise {
+        ... on ProductVariant {
+          sku
+        }
+      }
+      cost {
+        subtotalAmount {
+          amount
+        }
+      }
+    }
+  }
+  discount {
+    discountClasses
+    metafield(namespace: "free-gift", key: "config") {
+      value
+    }
+  }
+}
+
+

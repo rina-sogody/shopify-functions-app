@@ -1,0 +1,22 @@
+query RunInput {
+  cart {
+    lines {
+      id
+      quantity
+      merchandise {
+        ... on ProductVariant {
+          id
+          sku
+        }
+      }
+      cost {
+        totalAmount {
+          amount
+        }
+      }
+    }
+  }
+  discount {
+    discountClasses
+  }
+}

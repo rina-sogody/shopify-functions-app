@@ -1,0 +1,16 @@
+[[extensions]]
+name = "t:name"
+handle = "flex-discount"
+type = "function"
+api_version = "2025-04"
+uid = "470bb2b8-1831-98ac-2e9c-943fedcf61bed4c35f4e"
+description = "t:description"
+
+[extensions.build]
+command = ""
+path = "dist/function.wasm"
+
+[[extensions.targeting]]
+target = "cart.lines.discounts.generate.run"
+input_query = "src/cart_lines_discounts_generate_run.graphql"
+export = "cart-lines-discounts-generate-run"
