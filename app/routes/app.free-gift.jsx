@@ -4,18 +4,31 @@ import { useLoaderData } from "react-router";
 import { getStatus } from './api/free-gift-discount/status';
 import { metadata } from "../extensions/free-gift";
 
-export async function loader(request) {
+export async function loader({ request }) {
+  const url = new URL(request.url);
+  const discountId = url.searchParams.get("discountId");
 
-  const status = await getStatus({ request });
+  const status = await getStatus({
+    request,
+    discountId,
+  });
 
-  return { status };
+  return {
+    status,
+    discountId,
+    mode: discountId ? "edit" : "create",
+  };
 }
 
 export default function DashboardPage() {
-  const { status } = useLoaderData();
-  const [title, setTitle] = useState("");
+  const { status, discountId, mode } = useLoaderData();
+  const isEdit = mode === "edit";
+  const [title, setTitle] = useState(
+    status?.title || ""
+  );  
   const [creating, setCreating] = useState(false);
-  const hasDiscount = Boolean(status?.discount?.id);
+  const hasDiscount = isEdit && Boolean(status);
+
 
   const CREATE_PATH = "/api/free-gift-discount/create";
 
@@ -30,7 +43,7 @@ export default function DashboardPage() {
         body: JSON.stringify({
           title,
           settings: {
-            CART_TOTAL_THRESHOLD: settings.CART_TOTAL_THRESHOLD,
+            CART_TOTAL_THRESHOLD: Math.round(settings.CART_TOTAL_THRESHOLD * 100),
             FREE_GIFT_SKU: settings.FREE_GIFT_SKU,
           },
         }),
@@ -52,7 +65,6 @@ export default function DashboardPage() {
       setCreating(false);
     }
   }
-  
 
 
   const [settings, setSettings] = useState(() => {
@@ -69,8 +81,6 @@ export default function DashboardPage() {
   const [isActive, setIsActive] = useState(
     status?.discount?.status === "ACTIVE"
   );
-
-  const [discountId] = useState(status?.discount?.discountId || status?.id || null);
   
   const [loading, setLoading] = useState(false);
 
@@ -112,11 +122,14 @@ export default function DashboardPage() {
   }
 
   return (
-<s-page heading="Free Gift Discount">
+<s-page
+  heading={isEdit ? title : "Free Gift Discount"}
+  backAction={{ content: "Discounts", url: "/app" }}
+>
   <s-section heading={metadata.name}>
     <s-paragraph>{metadata.description}</s-paragraph>
 
-    {!hasDiscount && (
+    {!isEdit && (
       <s-section>
         <label>
           Discount name:{" "}
@@ -150,18 +163,21 @@ export default function DashboardPage() {
           ))}
         </s-section>
         <div style={{ marginTop: "1rem" }}>
-          <s-button
-            onClick={handleCreateDiscount}
-            disabled={creating}
-          >
-            {creating ? "Creating..." : "Create Free Gift Discount"}
-          </s-button>
+        <s-button
+          onClick={handleCreateDiscount}
+          disabled={creating}
+        >
+          {creating
+            ? isEdit ? "Saving..." : "Creating..."
+            : isEdit ? "Save changes" : "Create Free Gift Discount"}
+        </s-button>
         </div>
       </s-section>
     )}
 
-    {hasDiscount && (
+    {isEdit && (
       <s-section heading="Actions">
+
         <s-button
           onClick={() => handleStatusToggle("ACTIVE")}
           disabled={isActive || loading}
@@ -185,7 +201,7 @@ export default function DashboardPage() {
         Discount is <strong>{isActive ? "Active ✅" : "Inactive ❌"}</strong>
       </p>
       <p style={{ fontSize: "10px", color: "#666" }}>
-        ID: {status.discount.id}
+        ID: {discountId}
       </p>
     </s-section>
   )}

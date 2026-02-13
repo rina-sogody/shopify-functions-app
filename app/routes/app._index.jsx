@@ -167,6 +167,13 @@ export default function Index() {
                       ? "Deactivate"
                       : "Activate"}
                   </s-button>
+
+                  <s-button
+                    href={`/app/free-gift?discountId=${discount.id}`}
+                    variant="tertiary"
+                  >
+                    Edit
+                  </s-button>
                 </s-stack>
               </s-card>
             ))}
