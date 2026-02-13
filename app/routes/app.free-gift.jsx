@@ -66,20 +66,63 @@ export default function DashboardPage() {
     }
   }
 
+  async function handleSaveChanges() {
+    if (!discountId) return;
+  
+    setLoading(true);
+  
+    try {
+      const res = await fetch(ACTIVATE_PATH, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          discountId,
+          settings: {
+            CART_TOTAL_THRESHOLD: Math.round(settings.CART_TOTAL_THRESHOLD * 100),
+            FREE_GIFT_SKU: settings.FREE_GIFT_SKU,
+          },          
+          requestedStatus: isActive ? "ACTIVE" : "DEACTIVE"
+        }),
+      });
+  
+      const data = await res.json();
+  
+      if (!data.success) {
+        alert("Error saving changes");
+        return;
+      }
+  
+      alert("Settings updated successfully!");
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   const [settings, setSettings] = useState(() => {
     if (status?.metafield?.value) {
-      return JSON.parse(status.metafield.value);
+      const parsed = JSON.parse(status.metafield.value);
+  
+      return {
+        CART_TOTAL_THRESHOLD: parsed.threshold
+          ? parsed.threshold / 100 
+          : metadata.settings.find(s => s.key === "CART_TOTAL_THRESHOLD")?.default,
+  
+        FREE_GIFT_SKU: parsed.sku || ""
+      };
     }
+  
     const initial = {};
     metadata.settings.forEach((s) => {
       initial[s.key] = s.default;
     });
     return initial;
   });
+  
 
   const [isActive, setIsActive] = useState(
-    status?.discount?.status === "ACTIVE"
+    status?.status === "ACTIVE"
   );
   
   const [loading, setLoading] = useState(false);
@@ -129,7 +172,7 @@ export default function DashboardPage() {
   <s-section heading={metadata.name}>
     <s-paragraph>{metadata.description}</s-paragraph>
 
-    {!isEdit && (
+    {/* {!isEdit && ( */}
       <s-section>
         <label>
           Discount name:{" "}
@@ -164,7 +207,7 @@ export default function DashboardPage() {
         </s-section>
         <div style={{ marginTop: "1rem" }}>
         <s-button
-          onClick={handleCreateDiscount}
+          onClick={isEdit ? handleSaveChanges : handleCreateDiscount}
           disabled={creating}
         >
           {creating
@@ -173,7 +216,7 @@ export default function DashboardPage() {
         </s-button>
         </div>
       </s-section>
-    )}
+    {/* )} */}
 
     {isEdit && (
       <s-section heading="Actions">

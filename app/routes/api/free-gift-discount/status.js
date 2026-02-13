@@ -27,15 +27,15 @@ export async function getStatus({ request, discountId }) {
 
   const node = result.data?.discountNode;
 
-  if (!node || !node.automaticDiscount) {
+  if (!node || !node.discount) {
     return null;
   }
 
   return {
     nodeId: node.id,
-    discountId: node.automaticDiscount.discountId,
-    title: node.automaticDiscount.title,
-    status: node.automaticDiscount.status,
+    discountId: node.discount.discountId,
+    title: node.discount.title,
+    status: node.discount.status,
     metafield: node.metafield,
   };
 }
