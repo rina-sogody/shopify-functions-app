@@ -174,6 +174,7 @@ export default function Index() {
                   >
                     Edit
                   </s-button>
+                  
                 </s-stack>
               </s-card>
             ))}

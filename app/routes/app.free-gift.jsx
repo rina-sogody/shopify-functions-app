@@ -128,6 +128,8 @@ export default function DashboardPage() {
   const [loading, setLoading] = useState(false);
 
   const ACTIVATE_PATH = "/api/free-gift-discount/activate";
+  const DELETE_PATH = "/api/free-gift-discount/delete";
+
 
   async function handleStatusToggle(newStatus) {
     if (!discountId) return alert("Discount ID not found.");
@@ -158,6 +160,42 @@ export default function DashboardPage() {
       setLoading(false);
     }
   }
+
+  async function handleDelete() {
+    if (!discountId) return;
+  
+    const confirmed = window.confirm(
+      "Are you sure you want to delete this discount?"
+    );
+  
+    if (!confirmed) return;
+  
+    setLoading(true);
+  
+    try {
+      const res = await fetch(DELETE_PATH, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ discountId }),
+      });
+  
+      const data = await res.json();
+  
+      if (!data.success) {
+        alert("Error deleting discount");
+        return;
+      }
+  
+      alert("Discount deleted successfully");
+      window.location.href = "/app";
+  
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+  
 
 
   function handleSettingChange(key, value) {
@@ -234,8 +272,19 @@ export default function DashboardPage() {
         >
           {loading ? "Processing..." : "Deactivate Free Gift Discount"}
         </s-button>
+
+        {/* 👇 ADD THIS RIGHT HERE */}
+        <s-button
+          tone="critical"
+          onClick={handleDelete}
+          disabled={loading}
+        >
+          Delete Discount
+        </s-button>
+
       </s-section>
     )}
+
   </s-section>
 
   {hasDiscount && (
