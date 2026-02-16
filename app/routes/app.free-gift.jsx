@@ -3,6 +3,8 @@ import { useState } from "react";
 import { useLoaderData } from "react-router";
 import { getStatus } from './api/free-gift-discount/status';
 import { metadata } from "../extensions/free-gift";
+import { useNavigate } from "react-router";
+
 
 export async function loader({ request }) {
   const url = new URL(request.url);
@@ -21,6 +23,7 @@ export async function loader({ request }) {
 }
 
 export default function DashboardPage() {
+  const navigate = useNavigate();
   const { status, discountId, mode } = useLoaderData();
   const isEdit = mode === "edit";
   const [title, setTitle] = useState(
@@ -57,7 +60,7 @@ export default function DashboardPage() {
       }
   
       alert("Discount created successfully!");
-      window.location.reload(); 
+      navigate("/app");
     } catch (err) {
       console.error(err);
       alert("Local JS error: " + err.message);
@@ -187,7 +190,7 @@ export default function DashboardPage() {
       }
   
       alert("Discount deleted successfully");
-      window.location.href = "/app";
+      navigate("/app");
   
     } catch (err) {
       alert(err.message);
@@ -210,7 +213,6 @@ export default function DashboardPage() {
   <s-section heading={metadata.name}>
     <s-paragraph>{metadata.description}</s-paragraph>
 
-    {/* {!isEdit && ( */}
       <s-section>
         <label>
           Discount name:{" "}
@@ -254,7 +256,14 @@ export default function DashboardPage() {
         </s-button>
         </div>
       </s-section>
-    {/* )} */}
+
+      {hasDiscount && (
+        <s-section >
+          <p>
+            Status: <strong>{isActive ? "Active ✅" : "Inactive ❌"}</strong>
+          </p>
+        </s-section>
+      )}
 
     {isEdit && (
       <s-section heading="Actions">
@@ -273,7 +282,6 @@ export default function DashboardPage() {
           {loading ? "Processing..." : "Deactivate Free Gift Discount"}
         </s-button>
 
-        {/* 👇 ADD THIS RIGHT HERE */}
         <s-button
           tone="critical"
           onClick={handleDelete}
@@ -287,16 +295,6 @@ export default function DashboardPage() {
 
   </s-section>
 
-  {hasDiscount && (
-    <s-section heading="Discount Status">
-      <p>
-        Discount is <strong>{isActive ? "Active ✅" : "Inactive ❌"}</strong>
-      </p>
-      <p style={{ fontSize: "10px", color: "#666" }}>
-        ID: {discountId}
-      </p>
-    </s-section>
-  )}
 </s-page>
 
   );
