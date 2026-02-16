@@ -149,7 +149,6 @@ async function registerDiscountOnAppInstallation({ request, discount }) {
     throw new Error("App installation not found");
   }
 
-  // 2️⃣ Parse existing discounts (or init empty)
   let discounts = [];
 
   if (installation.metafield?.value) {
@@ -160,7 +159,6 @@ async function registerDiscountOnAppInstallation({ request, discount }) {
     }
   }
 
-  // 3️⃣ Append new discount
   discounts.push({
     nodeId: discount.nodeId,
     title: discount.title,

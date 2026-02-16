@@ -1,38 +1,41 @@
 import { shopifyGraphQLQuery } from "../../../shopify-graphql";
 
-export async function getStatus({ request }) {
-  try {
-    const query = `
-      {
-        discountNodes(first: 50) {
-          edges {
-            node {
+export async function getStatus({ request, discountId }) {
+  if (!discountId) {
+    return null;
+  }
+
+  const query = `
+      query getDiscount($id: ID!) {
+        discountNode(id: $id) {
               id
               discount {
                 ... on DiscountAutomaticApp {
                   discountId
                   title
                   status
-                  appDiscountType {
-                    functionId
                   }
-                }
-              }
             }
-          }
+        metafield(namespace: "free-gift", key: "config") {
+          value
         }
       }
+    }
     `;
 
-    const result = await shopifyGraphQLQuery({ query, variables: null, request });
+  const result = await shopifyGraphQLQuery({ query, variables: { id: discountId }, request });
 
-    const edges = result.data.discountNodes.edges || [];
-    const discount = edges.find(edge => edge.node.discount.title === "Free Gift Discount")?.node;
+  const node = result.data?.discountNode;
 
-    if (!discount) return null
-
-    return discount;
-  } catch (err) {
-    console.error("Error fetching discount status:", err);
+  if (!node || !node.discount) {
+    return null;
   }
+
+  return {
+    nodeId: node.id,
+    discountId: node.discount.discountId,
+    title: node.discount.title,
+    status: node.discount.status,
+    metafield: node.metafield,
+  };
 }

@@ -16,7 +16,6 @@ export default function App() {
   return (
     <AppProvider embedded apiKey={apiKey}>
       <s-app-nav>
-        <s-link href="/app">Home</s-link>
         <s-link href="/app/free-gift">Free Gift</s-link>
         <s-link href="/app/flex-discount">Flex Discount</s-link>
       </s-app-nav>
@@ -25,7 +24,6 @@ export default function App() {
   );
 }
 
-// Shopify needs React Router to catch some thrown responses, so that their headers are included in the response.
 export function ErrorBoundary() {
   return boundary.error(useRouteError());
 }

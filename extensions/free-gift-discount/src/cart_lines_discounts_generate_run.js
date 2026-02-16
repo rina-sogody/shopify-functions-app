@@ -12,7 +12,7 @@ export function cartLinesDiscountsGenerateRun(input) {
     input.discount?.metafield?.value || "{}"
   );
 
-  const CART_TOTAL_THRESHOLD = config.threshold ?? 30000;
+  const CART_TOTAL_THRESHOLD = config.threshold ?? 300;
   const FREE_GIFT_SKU = config.sku ?? 'snowboard-liquid';
 
   const freeGiftLine = lines.find(
