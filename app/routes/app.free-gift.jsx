@@ -266,8 +266,9 @@ export default function DashboardPage() {
       )}
 
     {isEdit && (
-      <s-section heading="Actions">
-
+      <s-section>
+        <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+      
         <s-button
           onClick={() => handleStatusToggle("ACTIVE")}
           disabled={isActive || loading}
@@ -289,7 +290,7 @@ export default function DashboardPage() {
         >
           Delete Discount
         </s-button>
-
+      </div>
       </s-section>
     )}
 
