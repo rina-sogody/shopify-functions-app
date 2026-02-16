@@ -137,12 +137,14 @@ export default function Index() {
           </s-card>
         </s-stack>
       </s-section>
-
+      <>
+      <s-heading>Your Discounts:</s-heading>
+      <br/>
       {discounts && discounts.length > 0 && (
-        <s-section heading="Your discounts">
-          <s-stack direction="block" gap="base">
-            {discounts.map((discount) => (
-              <s-card key={discount.id}>
+        <s-stack direction="block" gap="base">
+          {discounts.map((discount) => (
+            <s-section key={discount.id}>
+              <s-card>
                 <s-heading>{discount.title}</s-heading>
 
                 <s-paragraph>
@@ -170,17 +172,19 @@ export default function Index() {
 
                   <s-button
                     href={`/app/free-gift?discountId=${discount.id}`}
-                    variant="tertiary"
+                    variant="auto"
                   >
                     Edit
                   </s-button>
-                  
                 </s-stack>
+
               </s-card>
-            ))}
-          </s-stack>
-        </s-section>
+            </s-section>
+          ))}
+        </s-stack>
       )}
+</>
+
 
 
     </s-page>
