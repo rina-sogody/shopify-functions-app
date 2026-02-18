@@ -1,0 +1,19 @@
+query CartInput {
+  cart {
+    lines {
+      id
+      merchandise {
+        ... on ProductVariant {
+          id
+          sku
+        }
+      }
+    }
+  }
+  discount {
+    discountClasses
+    metafield(namespace: "free-gift-by-variant", key: "config") {
+      value
+    }
+  }
+}

@@ -1,0 +1,22 @@
+api_version = "2026-01"
+
+[[extensions]]
+name = "t:name"
+handle = "free-gift-by-variant"
+type = "function"
+uid = "859cac0d-0d18-c278-a36b-06c4884b17675e04d63b"
+description = "t:description"
+
+  [[extensions.targeting]]
+  target = "cart.lines.discounts.generate.run"
+  input_query = "src/cart_lines_discounts_generate_run.graphql"
+  export = "cart-lines-discounts-generate-run"
+
+  [[extensions.targeting]]
+  target = "cart.delivery-options.discounts.generate.run"
+  input_query = "src/cart_delivery_options_discounts_generate_run.graphql"
+  export = "cart-delivery-options-discounts-generate-run"
+
+  [extensions.build]
+  command = ""
+  path = "dist/function.wasm"
