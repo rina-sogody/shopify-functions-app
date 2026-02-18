@@ -89,115 +89,152 @@ export default function Index() {
 
   useEffect(() => {
     if (fetcher.data?.success) {
-      shopify.toast.show("Discount created successfully");
+      shopify.toast.show("Discount updated successfully");
     }
   }, [fetcher.data, shopify]);
 
   async function toggleDiscount(discount) {
     const requestedStatus =
       discount.status === "ACTIVE" ? "DEACTIVE" : "ACTIVE";
-  
+
     try {
-      const res = await fetch("/api/free-gift-discount/activate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          discountId: discount.id,
-          requestedStatus,
-          settings: {},
-        }),
-      });
-  
+      const res = await fetch(
+        discount.type === "free-gift"
+          ? "/api/free-gift-discount/activate"
+          : "/api/flex-discount/activate",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            discountId: discount.id,
+            requestedStatus,
+            settings: {},
+          }),
+        }
+      );
+
       const data = await res.json();
-  
+
       if (!data.success) {
-        alert(data.error || "Failed to update discount");
+        shopify.toast.show(data.error || "Failed to update discount");
         return;
       }
-  
+
       window.location.reload();
     } catch (err) {
       console.error(err);
-      alert("Failed to update discount");
+      shopify.toast.show("Failed to update discount");
     }
   }
-  
 
   return (
     <s-page heading="Discounts">
-      <s-section heading="Create a new discount">
-        <s-paragraph>
-          Create and manage automatic discounts powered by your app.
-        </s-paragraph>
-
-        <s-stack direction="block" gap="base">
-          <s-card>
-            <s-button href="/app/create">
+  
+      {/* CREATE SECTION */}
+      <div style={{ marginBottom: "2.5rem" }}>
+        <s-section heading="Create a new discount">
+          <s-paragraph>
+            Create and manage automatic discounts powered by your app.
+          </s-paragraph>
+  
+          <div style={{ marginTop: "1.25rem" }}>
+            <s-button href="/app/create" variant="primary">
               Create discount
             </s-button>
-          </s-card>
-        </s-stack>
-      </s-section>
-      <>
-      <s-heading>Your Discounts:</s-heading>
-      <br/>
+          </div>
+        </s-section>
+      </div>
+  
+      {/* YOUR DISCOUNTS TITLE */}
+      <div style={{ marginBottom: "1.25rem" }}>
+        <s-heading>Your Discounts</s-heading>
+      </div>
+  
+      {/* DISCOUNT LIST */}
       {discounts && discounts.length > 0 && (
-        <s-stack direction="block" gap="base">
+        <s-stack direction="block" gap="loose">
           {discounts.map((discount) => (
-            <s-section key={discount.id}>
-              <s-card>
-                <s-heading>{discount.title}</s-heading>
-
-                <s-paragraph>
-                  Status:{" "}
-                  <strong>
-                    {discount.status === "ACTIVE"
-                      ? "Active ✅"
-                      : "Inactive ❌"}
-                  </strong>
-                </s-paragraph>
-
-                <s-stack direction="inline" gap="base">
-                  <s-button
-                    onClick={() => toggleDiscount(discount)}
-                    variant={
-                      discount.status === "ACTIVE"
-                        ? "secondary"
-                        : "primary"
-                    }
-                  >
-                    {discount.status === "ACTIVE"
-                      ? "Deactivate"
-                      : "Activate"}
-                  </s-button>
-
-                  <s-button
-                    href={
-                      discount.type === "free-gift"
-                        ? `/app/free-gift?discountId=${discount.id}`
-                        : `/app/flex-discount?discountId=${discount.id}`
-                    }
-                    variant="auto"
-                  >
-                    Edit
-                  </s-button>
-
-                </s-stack>
-
-              </s-card>
-            </s-section>
+            <div key={discount.id} style={{ marginBottom: "1.5rem" }}>
+              <s-section>
+                <s-card>
+                  <div style={{ marginBottom: "1rem" }}>
+                    <s-heading>{discount.title}</s-heading>
+  
+                    <div style={{ marginTop: "0.5rem" }}>
+                      <s-paragraph>
+                        Type:{" "}
+                        <strong>
+                          {discount.type === "free-gift"
+                            ? "Free Gift"
+                            : "Tiered Discount"}
+                        </strong>
+                      </s-paragraph>
+  
+                      <s-paragraph>
+                        Status:{" "}
+                        <strong
+                          style={{
+                            color:
+                              discount.status === "ACTIVE"
+                                ? "green"
+                                : "var(--p-color-text-secondary)",
+                          }}
+                        >
+                          {discount.status === "ACTIVE"
+                            ? "Active"
+                            : "Inactive"}
+                        </strong>
+                      </s-paragraph>
+                    </div>
+                  </div>
+  
+                  <s-stack direction="inline" gap="base">
+                    <s-button
+                      onClick={() => toggleDiscount(discount)}
+                      variant={
+                        discount.status === "ACTIVE"
+                          ? "secondary"
+                          : "primary"
+                      }
+                    >
+                      {discount.status === "ACTIVE"
+                        ? "Deactivate"
+                        : "Activate"}
+                    </s-button>
+  
+                    <s-button
+                      href={
+                        discount.type === "free-gift"
+                          ? `/app/free-gift?discountId=${discount.id}`
+                          : `/app/flex-discount?discountId=${discount.id}`
+                      }
+                      variant="tertiary"
+                    >
+                      Edit
+                    </s-button>
+                  </s-stack>
+                </s-card>
+              </s-section>
+            </div>
           ))}
         </s-stack>
       )}
-      {discounts.length == 0 && (
-      <s-heading>Your currently dont have any discounts.</s-heading>
+  
+      {discounts.length === 0 && (
+        <div style={{ marginTop: "1rem" }}>
+          <s-card>
+            <div style={{ padding: "1rem 0" }}>
+              <s-paragraph>
+                You currently don’t have any discounts.
+              </s-paragraph>
+            </div>
+          </s-card>
+        </div>
       )}
-</>
-
-
-
+  
     </s-page>
   );
+  
 }
 
 export const headers = (headersArgs) => {
