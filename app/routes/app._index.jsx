@@ -145,12 +145,10 @@ export default function Index() {
         </s-section>
       </div>
   
-      {/* YOUR DISCOUNTS TITLE */}
       <div style={{ marginBottom: "1.25rem" }}>
         <s-heading>Your Discounts</s-heading>
       </div>
   
-      {/* DISCOUNT LIST */}
       {discounts && discounts.length > 0 && (
         <s-stack direction="block" gap="loose">
           {discounts.map((discount) => (
