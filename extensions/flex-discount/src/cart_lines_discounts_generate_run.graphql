@@ -18,5 +18,8 @@ query RunInput {
   }
   discount {
     discountClasses
+      metafield(namespace: "flex-discount", key: "config") {
+      value
+    }
   }
 }

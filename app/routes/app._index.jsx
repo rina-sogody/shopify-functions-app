@@ -64,12 +64,20 @@ export const loader = async ({ request }) => {
   const discountJson = await discountRes.json();
 
   const discounts = discountJson.data.nodes
-    .filter(Boolean)
-    .map(node => ({
+  .map((node, index) => {
+    if (!node) return null;
+
+    const managed = managedDiscounts[index];
+
+    return {
       id: node.id,
       title: node.automaticDiscount.title,
       status: node.automaticDiscount.status,
-    }));
+      type: managed.type,  
+    };
+  })
+  .filter(Boolean);
+
 
   return { discounts };
 };
@@ -117,13 +125,6 @@ export default function Index() {
 
   return (
     <s-page heading="Discounts">
-      <s-button
-        slot="primary-action"
-        href="/app/free-gift"
-      >
-        Create discount
-      </s-button>
-
       <s-section heading="Create a new discount">
         <s-paragraph>
           Create and manage automatic discounts powered by your app.
@@ -131,7 +132,7 @@ export default function Index() {
 
         <s-stack direction="block" gap="base">
           <s-card>
-            <s-button href="/app/free-gift">
+            <s-button href="/app/create">
               Create discount
             </s-button>
           </s-card>
@@ -171,17 +172,25 @@ export default function Index() {
                   </s-button>
 
                   <s-button
-                    href={`/app/free-gift?discountId=${discount.id}`}
+                    href={
+                      discount.type === "free-gift"
+                        ? `/app/free-gift?discountId=${discount.id}`
+                        : `/app/flex-discount?discountId=${discount.id}`
+                    }
                     variant="auto"
                   >
                     Edit
                   </s-button>
+
                 </s-stack>
 
               </s-card>
             </s-section>
           ))}
         </s-stack>
+      )}
+      {discounts.length == 0 && (
+      <s-heading>Your currently dont have any discounts.</s-heading>
       )}
 </>
 

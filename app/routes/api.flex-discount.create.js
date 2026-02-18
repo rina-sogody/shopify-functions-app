@@ -63,7 +63,7 @@ async function createAppDiscount({ request, title }) {
     variables: {
       input: {
         title,
-        functionHandle: "free-gift-discount",
+        functionHandle: "flex-discount",
         discountClasses: ["PRODUCT"],
         startsAt: new Date().toISOString()
       }
@@ -110,13 +110,13 @@ async function saveDiscountSettings({ request, nodeId, settings }) {
     variables: {
       metafields: [{
         ownerId: nodeId,
-        namespace: "free-gift",
+        namespace: "flex-discount",
         key: "config",
         type: "json",
         value: JSON.stringify({
-          threshold: settings.CART_TOTAL_THRESHOLD,
-          sku: settings.FREE_GIFT_SKU
-        })
+          tiers: settings.tiers,
+          eligibleSkus: settings.eligibleSkus
+        })                
       }]
     },
     request
@@ -161,7 +161,7 @@ async function registerDiscountOnAppInstallation({ request, discount }) {
   discounts.push({
     nodeId: discount.nodeId,
     title: discount.title,
-    type: "free-gift",
+    type: "flex-discount",
     createdAt: new Date().toISOString(),
   });
 
