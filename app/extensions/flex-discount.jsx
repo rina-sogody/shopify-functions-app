@@ -1,5 +1,5 @@
 export const metadata = {
-  name: 'Flex Tiered Discount',
+  name: 'Tiered Discount',
   description: 'Applies tiered percentage discounts based on eligible product SKUs.',
   settings: [
     {

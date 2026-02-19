@@ -159,15 +159,15 @@ export default function FlexDiscountPage() {
 
   return (
     <s-page
-      heading={metadata.name}
       backAction={{ content: "Discounts", url: "/app" }}
     >
       <s-section>
-        <s-paragraph>{metadata.description}</s-paragraph>
+      <h2 style={{ fontSize: "17px", marginTop: "0", marginBottom: "0"}}>{metadata.name}</h2>
+      <p style={{ fontSize: "15px" }}>{metadata.description}</p>
 
         <div style={{ marginBottom: "1rem" }}>
           <label>
-            Discount Name
+            Discount Name: 
             <input
               type="text"
               value={title}

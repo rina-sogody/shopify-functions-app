@@ -207,11 +207,11 @@ export default function DashboardPage() {
 
   return (
 <s-page
-  heading={isEdit ? title : "Free Gift Discount"}
   backAction={{ content: "Discounts", url: "/app" }}
 >
-  <s-section heading={metadata.name}>
-    <s-paragraph>{metadata.description}</s-paragraph>
+  <s-section>
+  <h2 style={{ fontSize: "17px", marginTop: "0"}}>{metadata.name}</h2>
+    <p style={{ fontSize: "15px" }}>{metadata.description}</p>
 
       <s-section>
         <label>
@@ -260,7 +260,7 @@ export default function DashboardPage() {
       {hasDiscount && (
         <s-section >
           <p>
-            Status: <strong>{isActive ? "Active ✅" : "Inactive ❌"}</strong>
+            Status: <strong>{isActive ? "Active" : "Inactive"}</strong>
           </p>
         </s-section>
       )}

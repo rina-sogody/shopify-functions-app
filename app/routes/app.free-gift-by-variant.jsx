@@ -125,15 +125,13 @@ export default function FreeGiftVariantPage() {
 
   return (
     <s-page
-      heading="Free Gift (Trigger Variant)"
       backAction={{ content: "Discounts", url: "/app" }}
     >
       <s-section>
-
-        {/* Title */}
+      <h2 style={{ fontSize: "17px", marginTop: "0"}}>Free Gift triggered by variant</h2>
         <div style={{ marginBottom: "1rem" }}>
           <label>
-            Discount Name
+            Discount Name: 
             <input
               type="text"
               value={title}
@@ -143,7 +141,6 @@ export default function FreeGiftVariantPage() {
           </label>
         </div>
 
-        {/* Trigger SKU */}
         <div style={{ marginBottom: "1rem" }}>
           <label>
             Trigger Variant SKU
@@ -161,7 +158,6 @@ export default function FreeGiftVariantPage() {
           </label>
         </div>
 
-        {/* Gift SKU */}
         <div style={{ marginBottom: "1rem" }}>
           <label>
             Gift Variant SKU
@@ -179,7 +175,6 @@ export default function FreeGiftVariantPage() {
           </label>
         </div>
 
-        {/* Actions */}
         <div style={{ marginTop: "1.5rem" }}>
           <s-button
             onClick={isEdit ? handleSave : handleCreate}

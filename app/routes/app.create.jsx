@@ -29,6 +29,16 @@ export default function CreateDiscountPage() {
             </s-button>
           </s-card>
 
+          <s-card>
+            <s-heading>Free Gift by Variant</s-heading>
+            <s-paragraph>
+              Make a product free when a specific trigger variant is in the cart.
+            </s-paragraph>
+            <s-button onClick={() => navigate("/app/free-gift-by-variant")}>
+              Create Variant Gift
+            </s-button>
+          </s-card>
+
         </s-stack>
 
       </s-section>

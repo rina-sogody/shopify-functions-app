@@ -5,7 +5,6 @@ import { boundary } from "@shopify/shopify-app-react-router/server";
 import { authenticate } from "../shopify.server";
 import { useLoaderData } from "react-router";
 
-
 export const loader = async ({ request }) => {
   const { admin } = await authenticate.admin(request);
 
@@ -97,12 +96,14 @@ export default function Index() {
     const requestedStatus =
       discount.status === "ACTIVE" ? "DEACTIVE" : "ACTIVE";
 
+      const endpointMap = {
+      "free-gift": "/api/free-gift-discount/activate",
+      "flex-discount": "/api/flex-discount/activate",
+      "free-gift-by-variant": "/api/free-gift-by-variant/activate",
+    };
+
     try {
-      const res = await fetch(
-        discount.type === "free-gift"
-          ? "/api/free-gift-discount/activate"
-          : "/api/flex-discount/activate",
-        {
+        const res = await fetch(endpointMap[discount.type], {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
@@ -127,15 +128,27 @@ export default function Index() {
     }
   }
 
+  const editRouteMap = {
+    "free-gift": (id) => `/app/free-gift?discountId=${id}`,
+    "flex-discount": (id) => `/app/flex-discount?discountId=${id}`,
+    "free-gift-by-variant": (id) => `/app/free-gift-by-variant?discountId=${id}`,
+  };
+
+  const typeLabelMap = {
+    "free-gift": "Free Gift",
+    "flex-discount": "Tiered Discount",
+    "free-gift-by-variant": "Free Gift by Variant",
+  };
+
   return (
     <s-page heading="Discounts">
   
-      {/* CREATE SECTION */}
-      <div style={{ marginBottom: "2.5rem" }}>
-        <s-section heading="Create a new discount">
-          <s-paragraph>
+      <div style={{ marginBottom: "1rem" }}>
+        <s-section>
+          <h1 style={{fontSize: "20px", margin: "0", marginTop: "6px"}}>Custom Discounts App</h1>
+          <p style={{fontSize: "18px"}}>
             Create and manage automatic discounts powered by your app.
-          </s-paragraph>
+          </p>
   
           <div style={{ marginTop: "1.25rem" }}>
             <s-button href="/app/create" variant="primary">
@@ -145,8 +158,8 @@ export default function Index() {
         </s-section>
       </div>
   
-      <div style={{ marginBottom: "1.25rem" }}>
-        <s-heading>Your Discounts</s-heading>
+      <div style={{ marginBottom: "1rem" }}>
+        <h3 style={{ fontSize: "16px" }}>Your Discounts:</h3>
       </div>
   
       {discounts && discounts.length > 0 && (
@@ -156,16 +169,11 @@ export default function Index() {
               <s-section>
                 <s-card>
                   <div style={{ marginBottom: "1rem" }}>
-                    <s-heading>{discount.title}</s-heading>
+                    <h3 style={{ fontSize: "16px", margin: "0" }}>{discount.title}</h3>
   
                     <div style={{ marginTop: "0.5rem" }}>
                       <s-paragraph>
-                        Type:{" "}
-                        <strong>
-                          {discount.type === "free-gift"
-                            ? "Free Gift"
-                            : "Tiered Discount"}
-                        </strong>
+                        Type: <strong>{typeLabelMap[discount.type]}</strong>
                       </s-paragraph>
   
                       <s-paragraph>
@@ -189,11 +197,7 @@ export default function Index() {
                   <s-stack direction="inline" gap="base">
                     <s-button
                       onClick={() => toggleDiscount(discount)}
-                      variant={
-                        discount.status === "ACTIVE"
-                          ? "secondary"
-                          : "primary"
-                      }
+                      variant="primary"
                     >
                       {discount.status === "ACTIVE"
                         ? "Deactivate"
@@ -201,12 +205,8 @@ export default function Index() {
                     </s-button>
   
                     <s-button
-                      href={
-                        discount.type === "free-gift"
-                          ? `/app/free-gift?discountId=${discount.id}`
-                          : `/app/flex-discount?discountId=${discount.id}`
-                      }
-                      variant="tertiary"
+                      href={editRouteMap[discount.type](discount.id)}
+                      variant="secondary"
                     >
                       Edit
                     </s-button>
