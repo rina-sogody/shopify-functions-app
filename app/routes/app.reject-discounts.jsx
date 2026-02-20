@@ -96,7 +96,7 @@ export default function RejectDiscountPage() {
     >
       <Breadcrumbs/>
       <s-section>
-
+      <h2 style={{ fontSize: "17px", marginTop: "0", marginBottom: "14px"}}>Reject Discount</h2>
         <div style={{ marginBottom: "1rem" }}>
           <label>
             Campaign Name:
