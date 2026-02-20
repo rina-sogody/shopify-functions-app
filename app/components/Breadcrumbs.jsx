@@ -7,7 +7,7 @@ export default function Breadcrumbs() {
     "/app/create": "Create",
     "/app/free-gift": "Free Gift",
     "/app/flex-discount": "Tiered Discount",
-    "/app/free-gift-by-variant": "Free Gift Variant",
+    "/app/free-gift-by-variant": "Free Gift",
     "/app/reject-discounts": "Reject Discounts",
   };
 
