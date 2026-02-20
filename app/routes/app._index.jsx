@@ -147,13 +147,7 @@ export default function Index() {
     <s-page>
   
       <div style={{ marginBottom: "0.5rem" }}>
-          <h1 style={{fontSize: "20px", margin: "0", marginTop: "6px"}}>Olavson Discount App</h1>
-          <p style={{fontSize: "18px"}}>
-            Create and manage automatic discounts.
-          </p>
-  
-          <div style={{ marginTop: "1.25rem" }}>
-          </div>
+          <h1 style={{fontSize: "20px", margin: "0", marginTop: "6px"}}>Create and manage automatic discounts.</h1>
       </div>
   
       <div style={{ marginBottom: "1rem",display: "flex", flexDirection: "row", width: "100%", justifyContent: "space-between", maxHeight: "36px" }}>
