@@ -1,6 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLoaderData, useNavigate } from "react-router";
 import { getStatus } from "./api/free-gift-by-variant/status";
+import Breadcrumbs from "../components/Breadcrumbs";
 
 export async function loader({ request }) {
   const url = new URL(request.url);
@@ -28,20 +29,22 @@ export default function FreeGiftVariantPage() {
   const loaderData = useLoaderData() || {};
   const { status, discountId, mode } = loaderData;
   const isEdit = mode === "edit";
-
   const [title, setTitle] = useState(status?.title || "");
   const [loading, setLoading] = useState(false);
 
-  const [settings, setSettings] = useState(() => {
-    if (status?.metafield?.value) {
-      try {
-        return JSON.parse(status.metafield.value);
-      } catch {
-        return {};
-      }
-    }
-    return {};
-  });
+  const [settings, setSettings] = useState({});
+  useEffect(() => {
+    if (!status?.metafield?.value) return;
+    try {
+      const parsed = JSON.parse(status.metafield.value);
+      setSettings({
+        triggerSku: parsed.triggerSku || "",
+        giftSku: parsed.giftSku || "",
+      });
+    } catch (e) {
+      console.error("Metafield parse error", e);
+  }
+  }, [status]);
 
   const CREATE_PATH = "/api/free-gift-by-variant/create";
   const ACTIVATE_PATH = "/api/free-gift-by-variant/activate";
@@ -127,6 +130,7 @@ export default function FreeGiftVariantPage() {
     <s-page
       backAction={{ content: "Discounts", url: "/app" }}
     >
+      <Breadcrumbs/>
       <s-section>
       <h2 style={{ fontSize: "17px", marginTop: "0"}}>Free Gift triggered by variant</h2>
         <div style={{ marginBottom: "1rem" }}>

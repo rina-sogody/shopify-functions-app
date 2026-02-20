@@ -1,12 +1,13 @@
 import { useNavigate } from "react-router";
+import Breadcrumbs from "../components/Breadcrumbs"
 
 export default function CreateDiscountPage() {
   const navigate = useNavigate();
 
   return (
     <s-page heading="Create Discount" backAction={{ content: "Back", url: "/app" }}>
+      <Breadcrumbs/>  
       <s-section>
-
         <s-stack direction="block" gap="base">
 
           <s-card>

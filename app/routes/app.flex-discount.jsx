@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useLoaderData, useNavigate } from "react-router";
 import { getStatus } from "./api/flex-discount/status";
 import { metadata } from "../extensions/flex-discount"; 
+import Breadcrumbs from "../components/Breadcrumbs"
 
 export async function loader({ request }) {
   const url = new URL(request.url);
@@ -161,6 +162,7 @@ export default function FlexDiscountPage() {
     <s-page
       backAction={{ content: "Discounts", url: "/app" }}
     >
+      <Breadcrumbs/>
       <s-section>
       <h2 style={{ fontSize: "17px", marginTop: "0", marginBottom: "0"}}>{metadata.name}</h2>
       <p style={{ fontSize: "15px" }}>{metadata.description}</p>

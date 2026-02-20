@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useLoaderData, useNavigate } from "react-router";
 import { getStatus } from "./api/reject-discounts/status";
+import Breadcrumbs from "../components/Breadcrumbs"
 
 export async function loader({ request }) {
   const url = new URL(request.url);
@@ -94,6 +95,7 @@ export default function RejectDiscountPage() {
       heading="Reject Discount Codes Campaign"
       backAction={{ content: "Discounts", url: "/app" }}
     >
+      <Breadcrumbs/>
       <s-section>
 
         <div style={{ marginBottom: "1rem" }}>

@@ -1,10 +1,10 @@
 /* eslint-disable no-undef */
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLoaderData } from "react-router";
 import { getStatus } from './api/free-gift-discount/status';
 import { metadata } from "../extensions/free-gift";
 import { useNavigate } from "react-router";
-
+import Breadcrumbs from "../components/Breadcrumbs";
 
 export async function loader({ request }) {
   const url = new URL(request.url);
@@ -102,27 +102,30 @@ export default function DashboardPage() {
       setLoading(false);
     }
   }
-
   const [settings, setSettings] = useState(() => {
-    if (status?.metafield?.value) {
-      const parsed = JSON.parse(status.metafield.value);
-  
-      return {
-        CART_TOTAL_THRESHOLD: parsed.threshold
-          ? parsed.threshold / 100 
-          : metadata.settings.find(s => s.key === "CART_TOTAL_THRESHOLD")?.default,
-  
-        FREE_GIFT_SKU: parsed.sku || ""
-      };
-    }
-  
     const initial = {};
-    metadata.settings.forEach((s) => {
+    metadata.settings.forEach(s => {
       initial[s.key] = s.default;
     });
     return initial;
   });
   
+  useEffect(() => {
+    if (!status?.metafield?.value) return;
+  
+    try {
+      const parsed = JSON.parse(status.metafield.value);
+  
+      setSettings({
+        CART_TOTAL_THRESHOLD: parsed.threshold
+          ? parsed.threshold / 100
+          : metadata.settings.find(s => s.key === "CART_TOTAL_THRESHOLD")?.default,
+        FREE_GIFT_SKU: parsed.sku || ""
+      });
+    } catch (e) {
+      console.error("Metafield parse error", e);
+    }
+  }, [status]);
 
   const [isActive, setIsActive] = useState(
     status?.status === "ACTIVE"
@@ -209,6 +212,7 @@ export default function DashboardPage() {
 <s-page
   backAction={{ content: "Discounts", url: "/app" }}
 >
+<Breadcrumbs/>
   <s-section>
   <h2 style={{ fontSize: "17px", marginTop: "0"}}>{metadata.name}</h2>
     <p style={{ fontSize: "15px" }}>{metadata.description}</p>
