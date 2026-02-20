@@ -98,7 +98,7 @@ export default function RejectDiscountPage() {
 
         <div style={{ marginBottom: "1rem" }}>
           <label>
-            Campaign Name
+            Campaign Name:
             <input
               type="text"
               value={title}
@@ -121,7 +121,7 @@ export default function RejectDiscountPage() {
               ? "Processing..."
               : isEdit
               ? "Save Changes"
-              : "Create Campaign"}
+              : "Create"}
           </s-button>
         </div>
 

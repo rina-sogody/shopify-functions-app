@@ -30,7 +30,7 @@ export default function CreateDiscountPage() {
           </s-card>
 
           <s-card>
-            <s-heading>Free Gift by Variant</s-heading>
+            <s-heading>Free Gift (Variant Trigger)</s-heading>
             <s-paragraph>
               Make a product free when a specific trigger variant is in the cart.
             </s-paragraph>

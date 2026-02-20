@@ -143,7 +143,7 @@ export default function FreeGiftVariantPage() {
 
         <div style={{ marginBottom: "1rem" }}>
           <label>
-            Trigger Variant SKU
+            Trigger Variant SKU:
             <input
               type="text"
               value={settings.triggerSku || ""}
@@ -160,7 +160,7 @@ export default function FreeGiftVariantPage() {
 
         <div style={{ marginBottom: "1rem" }}>
           <label>
-            Gift Variant SKU
+            Gift Variant SKU:
             <input
               type="text"
               value={settings.giftSku || ""}

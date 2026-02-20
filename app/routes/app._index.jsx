@@ -137,9 +137,9 @@ export default function Index() {
   };
 
   const typeLabelMap = {
-    "free-gift": "Free Gift",
+    "free-gift": "Free Gift (Cart Threshold)",
     "flex-discount": "Tiered Discount",
-    "free-gift-by-variant": "Free Gift by Variant",
+    "free-gift-by-variant": "Free Gift (Variant Trigger)",
     "reject-discounts": "Reject Discount",
   };
 
@@ -148,7 +148,7 @@ export default function Index() {
   
       <div style={{ marginBottom: "1rem" }}>
         <s-section>
-          <h1 style={{fontSize: "20px", margin: "0", marginTop: "6px"}}>Custom Discounts App</h1>
+          <h1 style={{fontSize: "20px", margin: "0", marginTop: "6px"}}>Olavson Discount App</h1>
           <p style={{fontSize: "18px"}}>
             Create and manage automatic discounts powered by your app.
           </p>
@@ -162,7 +162,7 @@ export default function Index() {
       </div>
   
       <div style={{ marginBottom: "1rem" }}>
-        <h3 style={{ fontSize: "16px" }}>Your Discounts:</h3>
+        <h3 style={{ fontSize: "16px" }}>All Discounts:</h3>
       </div>
   
       {discounts && discounts.length > 0 && (
