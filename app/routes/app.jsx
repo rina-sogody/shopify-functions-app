@@ -19,6 +19,7 @@ export default function App() {
         <s-link href="/app/free-gift">Free Gift</s-link>
         <s-link href="/app/free-gift-by-variant">Free Gift By Variant</s-link>
         <s-link href="/app/flex-discount">Tiered Discount</s-link>
+        <s-link href="/app/reject-discounts">Reject Discounts</s-link>
       </s-app-nav>
       <Outlet />
     </AppProvider>

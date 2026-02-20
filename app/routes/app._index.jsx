@@ -100,6 +100,7 @@ export default function Index() {
       "free-gift": "/api/free-gift-discount/activate",
       "flex-discount": "/api/flex-discount/activate",
       "free-gift-by-variant": "/api/free-gift-by-variant/activate",
+      "reject-discounts": "/api/reject-discounts/activate",
     };
 
     try {
@@ -132,12 +133,14 @@ export default function Index() {
     "free-gift": (id) => `/app/free-gift?discountId=${id}`,
     "flex-discount": (id) => `/app/flex-discount?discountId=${id}`,
     "free-gift-by-variant": (id) => `/app/free-gift-by-variant?discountId=${id}`,
+    "reject-discounts": (id) => `/app/reject-discounts?discountId=${id}`,
   };
 
   const typeLabelMap = {
     "free-gift": "Free Gift",
     "flex-discount": "Tiered Discount",
     "free-gift-by-variant": "Free Gift by Variant",
+    "reject-discounts": "Reject Discount",
   };
 
   return (

@@ -1,0 +1,6 @@
+query RunInput {
+  enteredDiscountCodes {
+    code
+    rejectable
+  }
+}
