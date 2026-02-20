@@ -92,7 +92,6 @@ export default function RejectDiscountPage() {
 
   return (
     <s-page
-      heading="Reject Discount Codes Campaign"
       backAction={{ content: "Discounts", url: "/app" }}
     >
       <Breadcrumbs/>

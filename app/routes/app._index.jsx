@@ -144,7 +144,7 @@ export default function Index() {
   };
 
   return (
-    <s-page heading="Discounts">
+    <s-page>
   
       <div style={{ marginBottom: "0.5rem" }}>
           <h1 style={{fontSize: "20px", margin: "0", marginTop: "6px"}}>Olavson Discount App</h1>
