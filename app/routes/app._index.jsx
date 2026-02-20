@@ -146,23 +146,21 @@ export default function Index() {
   return (
     <s-page heading="Discounts">
   
-      <div style={{ marginBottom: "1rem" }}>
-        <s-section>
+      <div style={{ marginBottom: "0.5rem" }}>
           <h1 style={{fontSize: "20px", margin: "0", marginTop: "6px"}}>Olavson Discount App</h1>
           <p style={{fontSize: "18px"}}>
-            Create and manage automatic discounts powered by your app.
+            Create and manage automatic discounts.
           </p>
   
           <div style={{ marginTop: "1.25rem" }}>
-            <s-button href="/app/create" variant="primary">
-              Create discount
-            </s-button>
           </div>
-        </s-section>
       </div>
   
-      <div style={{ marginBottom: "1rem" }}>
+      <div style={{ marginBottom: "1rem",display: "flex", flexDirection: "row", width: "100%", justifyContent: "space-between", maxHeight: "36px" }}>
         <h3 style={{ fontSize: "16px" }}>All Discounts:</h3>
+        <s-button href="/app/create" variant="primary">
+              Create discount
+        </s-button>
       </div>
   
       {discounts && discounts.length > 0 && (

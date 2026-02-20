@@ -39,8 +39,16 @@ export default function CreateDiscountPage() {
             </s-button>
           </s-card>
 
+          <s-card>
+            <s-heading>Reject Discounts</s-heading>
+            <s-paragraph>
+              Reject all discounts given at checkout when a campaign is going on.
+            </s-paragraph>
+            <s-button onClick={() => navigate("/app/reject-discounts")}>
+              Create Reject Discounts
+            </s-button>
+          </s-card>
         </s-stack>
-
       </s-section>
     </s-page>
   );
