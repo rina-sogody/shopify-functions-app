@@ -166,25 +166,29 @@ export default function Index() {
                   <div style={{ marginBottom: "1rem" }}>
                     <h3 style={{ fontSize: "16px", margin: "0" }}>{discount.title}</h3>
   
-                    <div style={{ marginTop: "0.5rem" }}>
+                    <div style={{ marginTop: "0.5rem", display: "flex", flexDirection: "column", gap: "6px" }}>
                       <s-paragraph>
                         Type: <strong>{typeLabelMap[discount.type]}</strong>
                       </s-paragraph>
   
                       <s-paragraph>
                         Status:{" "}
-                        <strong
+                        <span
                           style={{
-                            color:
+                            display: "inline-block",
+                            padding: "2px 12px",
+                            borderRadius: "999px",
+                            fontSize: "12px",
+                            fontWeight: 600,
+                            backgroundColor:
                               discount.status === "ACTIVE"
-                                ? "green"
-                                : "var(--p-color-text-secondary)",
+                                ? "rgba(34,197,94,0.15)"
+                                : "rgba(239,68,68,0.15)",
+                            color: discount.status === "ACTIVE" ? "#16a34a" : "#dc2626",
                           }}
                         >
-                          {discount.status === "ACTIVE"
-                            ? "Active"
-                            : "Inactive"}
-                        </strong>
+                          {discount.status === "ACTIVE" ? "Active" : "Inactive"}
+                        </span>
                       </s-paragraph>
                     </div>
                   </div>

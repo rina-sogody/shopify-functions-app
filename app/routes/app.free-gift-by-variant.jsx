@@ -149,7 +149,7 @@ export default function FreeGiftVariantPage() {
       <h2 style={{ fontSize: "17px", marginTop: "0"}}>Free Gift triggered by variant</h2>
         <div style={{ marginBottom: "1rem" }}>
           <label>
-            Discount Name: 
+            Discount Name: {" "}
             <input
               type="text"
               value={title}
@@ -161,7 +161,7 @@ export default function FreeGiftVariantPage() {
 
         <div style={{ marginBottom: "1rem" }}>
           <label>
-            Trigger Variant SKU:
+            Trigger Variant SKU: {" "}
             <input
               type="text"
               value={settings.triggerSku || ""}
@@ -178,7 +178,7 @@ export default function FreeGiftVariantPage() {
 
         <div style={{ marginBottom: "1rem" }}>
           <label>
-            Gift Variant SKU:
+            Gift Variant SKU: {" "}
             <input
               type="text"
               value={settings.giftSku || ""}
