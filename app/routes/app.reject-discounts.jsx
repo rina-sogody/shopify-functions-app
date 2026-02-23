@@ -113,7 +113,7 @@ export default function RejectDiscountPage() {
       <h2 style={{ fontSize: "17px", marginTop: "0", marginBottom: "14px"}}>Reject Discount</h2>
         <div style={{ marginBottom: "1rem" }}>
           <label>
-            Campaign Name:
+            Reject Discount Name: {" "} 
             <input
               type="text"
               value={title}
@@ -124,7 +124,7 @@ export default function RejectDiscountPage() {
         </div>
 
         <s-paragraph>
-          When active, this campaign rejects all discount codes entered at checkout.
+          When active, all codes entered at checkout will be rejected.
         </s-paragraph>
 
         <div style={{ marginTop: "1.5rem" }}>
