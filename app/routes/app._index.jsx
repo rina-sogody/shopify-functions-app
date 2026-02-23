@@ -147,13 +147,13 @@ export default function Index() {
     <s-page>
   
       <div style={{ marginBottom: "0.5rem" }}>
-          <h1 style={{fontSize: "20px", margin: "0", marginTop: "6px"}}>Create and manage automatic discounts.</h1>
+          <h1 style={{fontSize: "20px", margin: "0", marginTop: "6px"}}>Create and manage automatic discounts</h1>
       </div>
   
       <div style={{ marginBottom: "1rem",display: "flex", flexDirection: "row", width: "100%", justifyContent: "space-between", maxHeight: "36px" }}>
         <h3 style={{ fontSize: "16px" }}>All Discounts:</h3>
         <s-button href="/app/create" variant="primary">
-              Create discount
+              New discount
         </s-button>
       </div>
   
