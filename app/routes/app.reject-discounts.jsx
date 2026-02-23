@@ -117,6 +117,7 @@ export default function RejectDiscountPage() {
           <s-button
             onClick={isEdit ? handleSave : handleCreate}
             disabled={loading}
+            type="button"
           >
             {loading
               ? "Processing..."
@@ -128,7 +129,11 @@ export default function RejectDiscountPage() {
 
         {isEdit && (
           <div style={{ marginTop: "1rem" }}>
-            <s-button tone="critical" onClick={handleDelete} disabled={loading}>
+            <s-button tone="critical"
+             onClick={handleDelete} 
+             disabled={loading}
+             type="button"
+             >
               Delete
             </s-button>
           </div>

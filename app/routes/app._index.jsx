@@ -152,8 +152,8 @@ export default function Index() {
   
       <div style={{ marginBottom: "1rem",display: "flex", flexDirection: "row", width: "100%", justifyContent: "space-between", maxHeight: "36px" }}>
         <h3 style={{ fontSize: "16px" }}>All Discounts:</h3>
-        <s-button href="/app/create" variant="primary">
-              New discount
+        <s-button href="/app/create" variant="primary" type="button">
+            New discount
         </s-button>
       </div>
   
@@ -193,6 +193,7 @@ export default function Index() {
                     <s-button
                       onClick={() => toggleDiscount(discount)}
                       variant="primary"
+                      type="button"
                     >
                       {discount.status === "ACTIVE"
                         ? "Deactivate"
@@ -202,6 +203,7 @@ export default function Index() {
                     <s-button
                       href={editRouteMap[discount.type](discount.id)}
                       variant="secondary"
+                      type="button"
                     >
                       Edit
                     </s-button>

@@ -183,6 +183,7 @@ export default function FreeGiftVariantPage() {
           <s-button
             onClick={isEdit ? handleSave : handleCreate}
             disabled={loading}
+            type="button"
           >
             {loading
               ? "Processing..."
@@ -198,6 +199,7 @@ export default function FreeGiftVariantPage() {
               tone="critical"
               onClick={handleDelete}
               disabled={loading}
+              type="button"
             >
               Delete
             </s-button>

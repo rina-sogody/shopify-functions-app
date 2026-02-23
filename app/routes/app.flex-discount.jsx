@@ -248,6 +248,7 @@ export default function FlexDiscountPage() {
                   );
                   setSettings({ tiers: updated });
                 }}
+                type="button"
               >
                 Remove
               </s-button>
@@ -265,6 +266,7 @@ export default function FlexDiscountPage() {
                 ],
               });
             }}
+            type="button"
           >
             + Add Tier
           </s-button>
@@ -303,6 +305,7 @@ export default function FlexDiscountPage() {
                   const updated = settings.eligibleSkus.filter((_, i) => i !== index);
                   setSettings({ ...settings, eligibleSkus: updated });
                 }}
+                type="button"
               >
                 Remove
               </s-button>
@@ -318,6 +321,7 @@ export default function FlexDiscountPage() {
                 eligibleSkus: [...(settings.eligibleSkus || []), ""],
               });
             }}
+            type="button"
           >
             + Add SKU
           </s-button>
@@ -328,6 +332,7 @@ export default function FlexDiscountPage() {
           <s-button
             onClick={isEdit ? handleSave : handleCreate}
             disabled={loading}
+            type="button"
           >
             {loading
               ? "Processing..."
@@ -343,6 +348,7 @@ export default function FlexDiscountPage() {
               tone="critical"
               onClick={handleDelete}
               disabled={loading}
+              type="button"
             >
               {loading ? "Processing..." : "Delete"}
             </s-button>

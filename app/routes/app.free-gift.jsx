@@ -253,6 +253,7 @@ export default function DashboardPage() {
         <s-button
           onClick={isEdit ? handleSaveChanges : handleCreateDiscount}
           disabled={creating}
+          type="button"
         >
           {creating
             ? isEdit ? "Saving..." : "Creating..."
@@ -276,6 +277,7 @@ export default function DashboardPage() {
         <s-button
           onClick={() => handleStatusToggle("ACTIVE")}
           disabled={isActive || loading}
+          type="button"
         >
           {loading ? "Processing..." : "Activate Free Gift Discount"}
         </s-button>
@@ -283,6 +285,7 @@ export default function DashboardPage() {
         <s-button
           onClick={() => handleStatusToggle("DEACTIVE")}
           disabled={!isActive || loading}
+          type="button"
         >
           {loading ? "Processing..." : "Deactivate Free Gift Discount"}
         </s-button>
@@ -291,6 +294,7 @@ export default function DashboardPage() {
           tone="critical"
           onClick={handleDelete}
           disabled={loading}
+          type="button"
         >
           Delete Discount
         </s-button>

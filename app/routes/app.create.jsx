@@ -15,7 +15,7 @@ export default function CreateDiscountPage() {
             <s-paragraph>
               Give a free product when cart total exceeds a threshold.
             </s-paragraph>
-            <s-button onClick={() => navigate("/app/free-gift")}>
+            <s-button onClick={() => navigate("/app/free-gift")} type="button">
               Create Free Gift
             </s-button>
           </s-card>
@@ -25,7 +25,7 @@ export default function CreateDiscountPage() {
             <s-paragraph>
               Apply tiered discount based on cart total tiers.
             </s-paragraph>
-            <s-button onClick={() => navigate("/app/flex-discount")}>
+            <s-button onClick={() => navigate("/app/flex-discount")} type="button">
               Create Tiered Discount
             </s-button>
           </s-card>
@@ -35,7 +35,7 @@ export default function CreateDiscountPage() {
             <s-paragraph>
               Make a product free when a specific trigger variant is in the cart.
             </s-paragraph>
-            <s-button onClick={() => navigate("/app/free-gift-by-variant")}>
+            <s-button onClick={() => navigate("/app/free-gift-by-variant")} type="button">
               Create Variant Gift
             </s-button>
           </s-card>
@@ -45,7 +45,7 @@ export default function CreateDiscountPage() {
             <s-paragraph>
               Reject all discounts given at checkout when a campaign is going on.
             </s-paragraph>
-            <s-button onClick={() => navigate("/app/reject-discounts")}>
+            <s-button onClick={() => navigate("/app/reject-discounts")} type="button">
               Create Reject Discounts
             </s-button>
           </s-card>
