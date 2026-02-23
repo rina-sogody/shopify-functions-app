@@ -5,6 +5,7 @@ import { getStatus } from './api/free-gift-discount/status';
 import { metadata } from "../extensions/free-gift";
 import { useNavigate } from "react-router";
 import Breadcrumbs from "../components/Breadcrumbs";
+import ConfirmModal from "../components/ConfirmModal";
 
 export async function loader({ request }) {
   const url = new URL(request.url);
@@ -23,6 +24,7 @@ export async function loader({ request }) {
 }
 
 export default function DashboardPage() {
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const navigate = useNavigate();
   const { status, discountId, mode } = useLoaderData();
   const isEdit = mode === "edit";
@@ -32,9 +34,7 @@ export default function DashboardPage() {
   const [creating, setCreating] = useState(false);
   const hasDiscount = isEdit && Boolean(status);
 
-
   const CREATE_PATH = "/api/free-gift-discount/create";
-
 
   async function handleCreateDiscount() {
     setCreating(true);
@@ -167,14 +167,8 @@ export default function DashboardPage() {
     }
   }
 
-  async function handleDelete() {
+  async function handleDeleteConfirmed() {
     if (!discountId) return;
-  
-    const confirmed = window.confirm(
-      "Are you sure you want to delete this discount?"
-    );
-  
-    if (!confirmed) return;
   
     setLoading(true);
   
@@ -192,16 +186,15 @@ export default function DashboardPage() {
         return;
       }
   
-      alert("Discount deleted successfully");
       navigate("/app");
   
     } catch (err) {
       alert(err.message);
     } finally {
       setLoading(false);
+      setConfirmOpen(false);
     }
   }
-  
 
 
   function handleSettingChange(key, value) {
@@ -209,102 +202,111 @@ export default function DashboardPage() {
   }
 
   return (
-<s-page
-  backAction={{ content: "Discounts", url: "/app" }}
->
-<Breadcrumbs/>
-  <s-section>
-  <h2 style={{ fontSize: "17px", marginTop: "0"}}>{metadata.name}</h2>
-    <p style={{ fontSize: "15px" }}>{metadata.description}</p>
-
+    <s-page
+      backAction={{ content: "Discounts", url: "/app" }}
+    >
+    <Breadcrumbs/>
       <s-section>
-        <label>
-          Discount name:{" "}
-          <input
-            type="text"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            disabled={creating}
-          />
-        </label>
-        <s-section>
-          {metadata.settings.map((setting) => (
-            <div key={setting.key} style={{ marginBottom: "1rem" }}>
-              <label>
-                {setting.label}:{" "}
-                <input
-                  type={setting.type}
-                  value={settings[setting.key]}
-                  onChange={(e) =>
-                    handleSettingChange(
-                      setting.key,
-                      setting.type === "number"
-                        ? parseInt(e.target.value, 10)
-                        : e.target.value
-                    )
-                  }
-                  disabled={loading || creating}
-                />
-              </label>
+      <h2 style={{ fontSize: "17px", marginTop: "0"}}>{metadata.name}</h2>
+        <p style={{ fontSize: "15px" }}>{metadata.description}</p>
+
+          <s-section>
+            <label>
+              Discount name:{" "}
+              <input
+                type="text"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                disabled={creating}
+              />
+            </label>
+            <s-section>
+              {metadata.settings.map((setting) => (
+                <div key={setting.key} style={{ marginBottom: "1rem" }}>
+                  <label>
+                    {setting.label}:{" "}
+                    <input
+                      type={setting.type}
+                      value={settings[setting.key]}
+                      onChange={(e) =>
+                        handleSettingChange(
+                          setting.key,
+                          setting.type === "number"
+                            ? parseInt(e.target.value, 10)
+                            : e.target.value
+                        )
+                      }
+                      disabled={loading || creating}
+                    />
+                  </label>
+                </div>
+              ))}
+            </s-section>
+            <div style={{ marginTop: "1rem" }}>
+            <s-button
+              onClick={isEdit ? handleSaveChanges : handleCreateDiscount}
+              disabled={creating}
+              type="button"
+            >
+              {creating
+                ? isEdit ? "Saving..." : "Creating..."
+                : isEdit ? "Save changes" : "Create Free Gift Discount"}
+            </s-button>
             </div>
-          ))}
-        </s-section>
-        <div style={{ marginTop: "1rem" }}>
-        <s-button
-          onClick={isEdit ? handleSaveChanges : handleCreateDiscount}
-          disabled={creating}
-          type="button"
-        >
-          {creating
-            ? isEdit ? "Saving..." : "Creating..."
-            : isEdit ? "Save changes" : "Create Free Gift Discount"}
-        </s-button>
-        </div>
-      </s-section>
+          </s-section>
 
-      {hasDiscount && (
-        <s-section >
-          <p>
-            Status: <strong>{isActive ? "Active" : "Inactive"}</strong>
-          </p>
-        </s-section>
+          {hasDiscount && (
+            <s-section >
+              <p>
+                Status: <strong>{isActive ? "Active" : "Inactive"}</strong>
+              </p>
+            </s-section>
+          )}
+
+        {isEdit && (
+          <s-section>
+            <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+          
+            <s-button
+              onClick={() => handleStatusToggle("ACTIVE")}
+              disabled={isActive || loading}
+              type="button"
+            >
+              {loading ? "Processing..." : "Activate Free Gift Discount"}
+            </s-button>
+
+            <s-button
+              onClick={() => handleStatusToggle("DEACTIVE")}
+              disabled={!isActive || loading}
+              type="button"
+            >
+              {loading ? "Processing..." : "Deactivate Free Gift Discount"}
+            </s-button>
+
+            <s-button
+              tone="critical"
+              onClick={() => setConfirmOpen(true)}
+              disabled={loading}
+              type="button"
+            >
+              Delete Discount
+            </s-button>
+          </div>
+          </s-section>
+        )}
+
+      </s-section>
+      {confirmOpen && (
+        <ConfirmModal
+          open={confirmOpen}
+          title="Are you sure you want to delete this discount?"
+          confirmLabel="Yes"
+          cancelLabel="No"
+          loading={loading}
+          onCancel={() => setConfirmOpen(false)}
+          onConfirm={handleDeleteConfirmed}
+        />
       )}
-
-    {isEdit && (
-      <s-section>
-        <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
-      
-        <s-button
-          onClick={() => handleStatusToggle("ACTIVE")}
-          disabled={isActive || loading}
-          type="button"
-        >
-          {loading ? "Processing..." : "Activate Free Gift Discount"}
-        </s-button>
-
-        <s-button
-          onClick={() => handleStatusToggle("DEACTIVE")}
-          disabled={!isActive || loading}
-          type="button"
-        >
-          {loading ? "Processing..." : "Deactivate Free Gift Discount"}
-        </s-button>
-
-        <s-button
-          tone="critical"
-          onClick={handleDelete}
-          disabled={loading}
-          type="button"
-        >
-          Delete Discount
-        </s-button>
-      </div>
-      </s-section>
-    )}
-
-  </s-section>
-
-</s-page>
-
+    </s-page>
   );
 }

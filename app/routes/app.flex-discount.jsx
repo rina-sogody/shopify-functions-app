@@ -3,6 +3,8 @@ import { useLoaderData, useNavigate } from "react-router";
 import { getStatus } from "./api/flex-discount/status";
 import { metadata } from "../extensions/flex-discount"; 
 import Breadcrumbs from "../components/Breadcrumbs"
+import ConfirmModal from "../components/ConfirmModal";
+
 
 export async function loader({ request }) {
   const url = new URL(request.url);
@@ -18,6 +20,7 @@ export async function loader({ request }) {
 }
 
 export default function FlexDiscountPage() {
+  const [confirmOpen, setConfirmOpen] = useState(false);
   const navigate = useNavigate();
   const { status, discountId, mode } = useLoaderData();
   const isEdit = mode === "edit";
@@ -142,19 +145,31 @@ export default function FlexDiscountPage() {
     }
   }
 
-  async function handleDelete() {
+  async function handleDeleteConfirmed() {
+    if (!discountId) return;
+  
     setLoading(true);
 
     try {
-      await fetch(DELETE_PATH, {
+      const res = await fetch(DELETE_PATH, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ discountId }),
       });
 
+      const data = await res.json();
+  
+      if (!data.success) {
+        alert("Error deleting discount");
+        return;
+      }
+  
       navigate("/app");
+    } catch (err) {
+      alert(err.message);
     } finally {
       setLoading(false);
+      setConfirmOpen(false);
     }
   }
 
@@ -178,7 +193,6 @@ export default function FlexDiscountPage() {
             />
           </label>
         </div>
-        
 
         <s-section heading="Discount Tiers">
           {settings.tiers.map((tier, index) => (
@@ -346,7 +360,7 @@ export default function FlexDiscountPage() {
           <div style={{ marginTop: "1rem" }}>
             <s-button
               tone="critical"
-              onClick={handleDelete}
+              onClick={() => setConfirmOpen(true)}
               disabled={loading}
               type="button"
             >
@@ -355,6 +369,17 @@ export default function FlexDiscountPage() {
           </div>
         )}
       </s-section>
+      {confirmOpen && (
+        <ConfirmModal
+          open={confirmOpen}
+          title="Are you sure you want to delete this discount?"
+          confirmLabel="Yes"
+          cancelLabel="No"
+          loading={loading}
+          onCancel={() => setConfirmOpen(false)}
+          onConfirm={handleDeleteConfirmed}
+        />
+      )}
     </s-page>
   );
 }
