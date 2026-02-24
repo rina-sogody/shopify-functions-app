@@ -5,9 +5,9 @@ export async function action({ request }) {
     const body = await request.json();
     const { title } = body;
 
-    if (!title) {
+    if (!title?.trim()) {
       return new Response(
-        JSON.stringify({ success: false, error: "Missing discount title" }),
+        JSON.stringify({ success: false, error: "Campaign name required" }),
         { status: 400 }
       );
     }

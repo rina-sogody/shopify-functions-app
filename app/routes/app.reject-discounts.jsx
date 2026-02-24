@@ -1,7 +1,9 @@
 import { useState } from "react";
 import { useLoaderData, useNavigate } from "react-router";
+
 import { getStatus } from "./api/reject-discounts/status";
-import Breadcrumbs from "../components/Breadcrumbs"
+
+import Breadcrumbs from "../components/Breadcrumbs";
 import ConfirmModal from "../components/ConfirmModal";
 import Toast from "../components/Toast";
 
@@ -26,33 +28,39 @@ export async function loader({ request }) {
   };
 }
 
+const CREATE_PATH = "/api/reject-discounts/create";
+const ACTIVATE_PATH = "/api/reject-discounts/activate";
+const DELETE_PATH = "/api/reject-discounts/delete";
+
 export default function RejectDiscountPage() {
-  const [confirmOpen, setConfirmOpen] = useState(false);
   const navigate = useNavigate();
   const { status, discountId, mode } = useLoaderData();
+
   const isEdit = mode === "edit";
+
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState(null);
 
-  // function toastSuccess(message) {
-  //   setToast({ message, tone: "success" });
-  // }
-  
-  function toastError(message) {
-    setToast({ message, tone: "error" });
+  const [title, setTitle] = useState(status?.title || "");
+
+  const toastError = (message) => setToast({ message, tone: "error" });
+  const toastSuccess = (message) => setToast({ message, tone: "success" });
+
+  function validate() {
+    if (!title?.trim()) {
+      toastError("Campaign name required");
+      return false;
+    }
+    return true;
   }
 
-  const [title, setTitle] = useState(status?.title || "");
-  const [loading, setLoading] = useState(false);
-
-  const CREATE_PATH = "/api/reject-discounts/create";
-  const ACTIVATE_PATH = "/api/reject-discounts/activate";
-  const DELETE_PATH = "/api/reject-discounts/delete";
+  /* ================= ACTIONS ================= */
 
   async function handleCreate() {
-    if (!title.trim()) return toastError("Campaign name required");
+    if (!validate()) return;
 
     setLoading(true);
-
     try {
       const res = await fetch(CREATE_PATH, {
         method: "POST",
@@ -61,18 +69,28 @@ export default function RejectDiscountPage() {
       });
 
       const data = await res.json();
-      if (data.success) navigate("/app");
-      else toastError("Error creating campaign");
+
+      if (!data.success) {
+        toastError(data.error || "Error creating campaign");
+        return;
+      }
+
+      toastSuccess("Campaign created successfully!");
+      setTimeout(() => navigate("/app"), 700);
+    } catch (err) {
+      toastError(err.message);
     } finally {
       setLoading(false);
     }
   }
 
   async function handleSave() {
-    setLoading(true);
+    if (!discountId) return toastError("Discount ID missing");
+    if (!validate()) return;
 
+    setLoading(true);
     try {
-      await fetch(ACTIVATE_PATH, {
+      const res = await fetch(ACTIVATE_PATH, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -81,6 +99,18 @@ export default function RejectDiscountPage() {
           requestedStatus: status?.status || "ACTIVE",
         }),
       });
+
+      const data = await res.json();
+
+      if (!data.success) {
+        toastError("Error deleting discount");
+        return;
+      }
+
+      toastSuccess("Campaign deleted");
+      setTimeout(() => navigate("/app"), 700);
+    } catch (err) {
+      toastError(err.message);
     } finally {
       setLoading(false);
     }
@@ -88,23 +118,22 @@ export default function RejectDiscountPage() {
 
   async function handleDeleteConfirmed() {
     if (!discountId) return;
-  
-    setLoading(true);
 
+    setLoading(true);
     try {
       const res = await fetch(DELETE_PATH, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ discountId }),
       });
-  
+
       const data = await res.json();
-  
+
       if (!data.success) {
         toastError("Error deleting discount");
         return;
       }
-  
+
       navigate("/app");
     } catch (err) {
       toastError(err.message);
@@ -115,15 +144,17 @@ export default function RejectDiscountPage() {
   }
 
   return (
-    <s-page
-      backAction={{ content: "Discounts", url: "/app" }}
-    >
-      <Breadcrumbs/>
+    <s-page backAction={{ content: "Discounts", url: "/app" }}>
+      <Breadcrumbs />
+
       <s-section>
-      <h2 style={{ fontSize: "17px", marginTop: "0", marginBottom: "14px"}}>Reject Discount</h2>
+        <h2 style={{ fontSize: "17px", marginTop: 0, marginBottom: "14px" }}>
+          Reject Discount
+        </h2>
+
         <div style={{ marginBottom: "1rem" }}>
           <label>
-            Reject Discount Name: {" "} 
+            Reject Discount Name:{" "}
             <input
               type="text"
               value={title}
@@ -143,27 +174,24 @@ export default function RejectDiscountPage() {
             disabled={loading}
             type="button"
           >
-            {loading
-              ? "Processing..."
-              : isEdit
-              ? "Save Changes"
-              : "Create"}
+            {loading ? "Processing..." : isEdit ? "Save Changes" : "Create"}
           </s-button>
         </div>
 
         {isEdit && (
           <div style={{ marginTop: "1rem" }}>
-            <s-button tone="critical"
+            <s-button
+              tone="critical"
               onClick={() => setConfirmOpen(true)}
               disabled={loading}
               type="button"
-             >
+            >
               Delete
             </s-button>
           </div>
         )}
-
       </s-section>
+
       {confirmOpen && (
         <ConfirmModal
           open={confirmOpen}
@@ -175,6 +203,7 @@ export default function RejectDiscountPage() {
           onConfirm={handleDeleteConfirmed}
         />
       )}
+
       <Toast
         message={toast?.message}
         tone={toast?.tone}
