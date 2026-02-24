@@ -5,9 +5,16 @@ export async function action({ request }) {
     const body = await request.json();
     const { title, settings } = body;
 
-    if (!title) {
+    if (!title?.trim()) {
       return new Response(
-        JSON.stringify({ success: false, error: "Missing discount title" }),
+        JSON.stringify({ success: false, error: "Discount title is required" }),
+        { status: 400 }
+      );
+    }
+    
+    if (!settings?.FREE_GIFT_SKU?.trim()) {
+      return new Response(
+        JSON.stringify({ success: false, error: "Free gift SKU is required" }),
         { status: 400 }
       );
     }
