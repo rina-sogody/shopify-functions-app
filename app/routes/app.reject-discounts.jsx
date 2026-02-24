@@ -110,7 +110,7 @@ export default function RejectDiscountPage() {
         return;
       }
 
-      toastSuccess("Campaign deleted");
+      toastSuccess("Saved!");
       setTimeout(() => navigate("/app"), 700);
     } catch (err) {
       toastError(err.message);
