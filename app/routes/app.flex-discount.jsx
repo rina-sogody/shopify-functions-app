@@ -213,7 +213,7 @@ export default function FlexDiscountPage() {
 
         <div style={{ marginBottom: "1rem" }}>
           <label>
-            Discount Name: 
+            Discount Name: {" "}
             <input
               type="text"
               value={title}
@@ -236,7 +236,7 @@ export default function FlexDiscountPage() {
               }}
             >
               <label>
-                Spend (€)
+                Spend (€): {" "}
                 <input
                   type="number"
                   min="0"
@@ -252,7 +252,7 @@ export default function FlexDiscountPage() {
               </label>
 
               <label>
-                Discount (%)
+                Discount (%): {" "}
                 <input
                   type="number"
                   min="1"
@@ -269,7 +269,7 @@ export default function FlexDiscountPage() {
               </label>
 
               <label>
-                Message
+                Message: {" "}
                 <input
                   type="text"
                   value={tier.message}
@@ -328,7 +328,7 @@ export default function FlexDiscountPage() {
               }}
             >
               <label>
-                SKU
+                SKU: {" "}
                 <input
                   type="text"
                   value={sku}
