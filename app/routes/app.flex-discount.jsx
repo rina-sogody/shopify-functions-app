@@ -4,6 +4,7 @@ import { getStatus } from "./api/flex-discount/status";
 import { metadata } from "../extensions/flex-discount"; 
 import Breadcrumbs from "../components/Breadcrumbs"
 import ConfirmModal from "../components/ConfirmModal";
+import Toast from "../components/Toast";
 
 
 export async function loader({ request }) {
@@ -50,6 +51,14 @@ export default function FlexDiscountPage() {
       eligibleSkus: [],
     };
   });
+  const [toast, setToast] = useState(null);
+  // function toastSuccess(message) {
+  //   setToast({ message, tone: "success" });
+  // }
+  
+  function toastError(message) {
+    setToast({ message, tone: "error" });
+  }
   
 
   const CREATE_PATH = "/api/flex-discount/create";
@@ -58,22 +67,22 @@ export default function FlexDiscountPage() {
 
   function validate() {
     if (!title.trim()) {
-      alert("Discount name is required.");
+      toastError("Discount name is required.");
       return false;
     }
 
     if (!settings.tiers.length) {
-      alert("At least one tier is required.");
+      toastError("At least one tier is required.");
       return false;
     }
 
     for (const tier of settings.tiers) {
       if (tier.threshold <= 0) {
-        alert("Threshold must be greater than 0.");
+        toastError("Threshold must be greater than 0.");
         return false;
       }
       if (tier.percent <= 0 || tier.percent > 100) {
-        alert("Discount percent must be between 1 and 100.");
+        toastError("Discount percent must be between 1 and 100.");
         return false;
       }
     }
@@ -114,7 +123,7 @@ export default function FlexDiscountPage() {
         navigate("/app");
       } else {
         console.error("Create error:", data);
-        alert(JSON.stringify(data, null, 2));
+        toastError(JSON.stringify(data, null, 2));
       }
       
     } finally {
@@ -139,7 +148,7 @@ export default function FlexDiscountPage() {
       });
 
       const data = await res.json();
-      if (!data.success) alert("Error saving");
+      if (!data.success) toastError("Error saving");
     } finally {
       setLoading(false);
     }
@@ -160,13 +169,13 @@ export default function FlexDiscountPage() {
       const data = await res.json();
   
       if (!data.success) {
-        alert("Error deleting discount");
+        toastError("Error deleting discount");
         return;
       }
   
       navigate("/app");
     } catch (err) {
-      alert(err.message);
+      toastError(err.message);
     } finally {
       setLoading(false);
       setConfirmOpen(false);
@@ -380,6 +389,11 @@ export default function FlexDiscountPage() {
           onConfirm={handleDeleteConfirmed}
         />
       )}
+      <Toast
+        message={toast?.message}
+        tone={toast?.tone}
+        onClose={() => setToast(null)}
+      />
     </s-page>
   );
 }

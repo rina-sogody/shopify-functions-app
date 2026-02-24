@@ -3,6 +3,8 @@ import { useLoaderData, useNavigate } from "react-router";
 import { getStatus } from "./api/free-gift-by-variant/status";
 import Breadcrumbs from "../components/Breadcrumbs";
 import ConfirmModal from "../components/ConfirmModal";
+import Toast from "../components/Toast";
+
 
 
 export async function loader({ request }) {
@@ -35,6 +37,16 @@ export default function FreeGiftVariantPage() {
   const [title, setTitle] = useState(status?.title || "");
   const [loading, setLoading] = useState(false);
 
+  const [toast, setToast] = useState(null);
+
+  // function toastSuccess(message) {
+  //   setToast({ message, tone: "success" });
+  // }
+  
+  function toastError(message) {
+    setToast({ message, tone: "error" });
+  }
+
   const [settings, setSettings] = useState({});
   useEffect(() => {
     if (!status?.metafield?.value) return;
@@ -55,17 +67,17 @@ export default function FreeGiftVariantPage() {
 
   function validate() {
     if (!title.trim()) {
-      alert("Discount name is required");
+      toastError("Discount name is required");
       return false;
     }
 
     if (!settings.triggerSku?.trim()) {
-      alert("Trigger SKU is required");
+      toastError("Trigger SKU is required");
       return false;
     }
 
     if (!settings.giftSku?.trim()) {
-      alert("Gift SKU is required");
+      toastError("Gift SKU is required");
       return false;
     }
 
@@ -87,7 +99,7 @@ export default function FreeGiftVariantPage() {
       const data = await res.json();
 
       if (data.success) navigate("/app");
-      else alert("Error creating discount");
+      else toastError("Error creating discount");
     } finally {
       setLoading(false);
     }
@@ -127,13 +139,13 @@ export default function FreeGiftVariantPage() {
       const data = await res.json();
   
       if (!data.success) {
-        alert("Error deleting discount");
+        toastError("Error deleting discount");
         return;
       }
   
       navigate("/app");
     } catch (err) {
-      alert(err.message);
+      toastError(err.message);
     } finally {
       setLoading(false);
       setConfirmOpen(false);
@@ -232,6 +244,11 @@ export default function FreeGiftVariantPage() {
           onConfirm={handleDeleteConfirmed}
         />
       )}
+      <Toast
+        message={toast?.message}
+        tone={toast?.tone}
+        onClose={() => setToast(null)}
+      />
     </s-page>
   );
 }

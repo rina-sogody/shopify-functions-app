@@ -6,6 +6,7 @@ import { metadata } from "../extensions/free-gift";
 import { useNavigate } from "react-router";
 import Breadcrumbs from "../components/Breadcrumbs";
 import ConfirmModal from "../components/ConfirmModal";
+import Toast from "../components/Toast";
 
 export async function loader({ request }) {
   const url = new URL(request.url);
@@ -33,6 +34,15 @@ export default function DashboardPage() {
   );  
   const [creating, setCreating] = useState(false);
   const hasDiscount = isEdit && Boolean(status);
+  const [toast, setToast] = useState(null);
+
+  function toastSuccess(message) {
+    setToast({ message, tone: "success" });
+  }
+  
+  function toastError(message) {
+    setToast({ message, tone: "error" });
+  }
 
   const CREATE_PATH = "/api/free-gift-discount/create";
 
@@ -55,15 +65,15 @@ export default function DashboardPage() {
       const data = await res.json();
   
       if (!data.success) {
-        alert("Error creating discount: " + (data.error || "Unknown error"));
+        toastError("Error creating discount: " + (data.error || "Unknown error"), "error");
         return;
       }
   
-      alert("Discount created successfully!");
+      toastSuccess("Discount created successfully!");
       navigate("/app");
     } catch (err) {
       console.error(err);
-      alert("Local JS error: " + err.message);
+      toastError("Local JS error: " + err.message);
     } finally {
       setCreating(false);
     }
@@ -91,13 +101,13 @@ export default function DashboardPage() {
       const data = await res.json();
   
       if (!data.success) {
-        alert("Error saving changes");
+        toastError("Error saving changes", "error");
         return;
       }
   
-      alert("Settings updated successfully!");
+      toastSuccess("Settings updated successfully!");
     } catch (err) {
-      alert(err.message);
+      toastError(err.message);
     } finally {
       setLoading(false);
     }
@@ -138,7 +148,7 @@ export default function DashboardPage() {
 
 
   async function handleStatusToggle(newStatus) {
-    if (!discountId) return alert("Discount ID not found.");
+    if (!discountId) return toastError("Discount ID not found.");
 
     setLoading(true);
     try {
@@ -155,13 +165,13 @@ export default function DashboardPage() {
       const data = await res.json();
       if (data.success) {
         setIsActive(newStatus === "ACTIVE");
-        alert(`Discount ${newStatus.toLowerCase()}d and settings saved!`);
+        toastSuccess(`Discount ${newStatus.toLowerCase()}d and settings saved!`);
       } else {
-        alert("Error: " + JSON.stringify(data.errors || data.error));
+        toastError("Error: " + JSON.stringify(data.errors || data.error));
       }
     } catch (err) {
       console.error(err);
-      alert("Local JS Error: " + err.message); 
+      toastError("Local JS Error: " + err.message); 
     } finally {
       setLoading(false);
     }
@@ -182,14 +192,14 @@ export default function DashboardPage() {
       const data = await res.json();
   
       if (!data.success) {
-        alert("Error deleting discount");
+        toastError("Error deleting discount");
         return;
       }
   
       navigate("/app");
   
     } catch (err) {
-      alert(err.message);
+      toastError(err.message);
     } finally {
       setLoading(false);
       setConfirmOpen(false);
@@ -258,7 +268,21 @@ export default function DashboardPage() {
           {hasDiscount && (
             <s-section >
               <p>
-                Status: <strong>{isActive ? "Active" : "Inactive"}</strong>
+                Status: {" "}
+                <span
+                  style={{
+                    display: "inline-block",
+                    padding: "2px 12px",
+                    borderRadius: "999px",
+                    fontSize: "12px",
+                    fontWeight: 600,
+                    backgroundColor:
+                      isActive === "Active"
+                       ? "rgba(239,68,68,0.15)"
+                        : "rgba(34,197,94,0.15)",
+                    color: isActive === "Active" ? "#dc2626" : "#16a34a",
+                  }}>
+                  {isActive ? "Active" : "Inactive"}</span>
               </p>
             </s-section>
           )}
@@ -307,6 +331,11 @@ export default function DashboardPage() {
           onConfirm={handleDeleteConfirmed}
         />
       )}
+      <Toast
+        message={toast?.message}
+        tone={toast?.tone}
+        onClose={() => setToast(null)}
+      />
     </s-page>
   );
 }

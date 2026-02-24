@@ -3,6 +3,7 @@ import { useLoaderData, useNavigate } from "react-router";
 import { getStatus } from "./api/reject-discounts/status";
 import Breadcrumbs from "../components/Breadcrumbs"
 import ConfirmModal from "../components/ConfirmModal";
+import Toast from "../components/Toast";
 
 export async function loader({ request }) {
   const url = new URL(request.url);
@@ -30,6 +31,15 @@ export default function RejectDiscountPage() {
   const navigate = useNavigate();
   const { status, discountId, mode } = useLoaderData();
   const isEdit = mode === "edit";
+  const [toast, setToast] = useState(null);
+
+  // function toastSuccess(message) {
+  //   setToast({ message, tone: "success" });
+  // }
+  
+  function toastError(message) {
+    setToast({ message, tone: "error" });
+  }
 
   const [title, setTitle] = useState(status?.title || "");
   const [loading, setLoading] = useState(false);
@@ -39,7 +49,7 @@ export default function RejectDiscountPage() {
   const DELETE_PATH = "/api/reject-discounts/delete";
 
   async function handleCreate() {
-    if (!title.trim()) return alert("Campaign name required");
+    if (!title.trim()) return toastError("Campaign name required");
 
     setLoading(true);
 
@@ -52,7 +62,7 @@ export default function RejectDiscountPage() {
 
       const data = await res.json();
       if (data.success) navigate("/app");
-      else alert("Error creating campaign");
+      else toastError("Error creating campaign");
     } finally {
       setLoading(false);
     }
@@ -91,13 +101,13 @@ export default function RejectDiscountPage() {
       const data = await res.json();
   
       if (!data.success) {
-        alert("Error deleting discount");
+        toastError("Error deleting discount");
         return;
       }
   
       navigate("/app");
     } catch (err) {
-      alert(err.message);
+      toastError(err.message);
     } finally {
       setLoading(false);
       setConfirmOpen(false);
@@ -165,6 +175,11 @@ export default function RejectDiscountPage() {
           onConfirm={handleDeleteConfirmed}
         />
       )}
+      <Toast
+        message={toast?.message}
+        tone={toast?.tone}
+        onClose={() => setToast(null)}
+      />
     </s-page>
   );
 }
