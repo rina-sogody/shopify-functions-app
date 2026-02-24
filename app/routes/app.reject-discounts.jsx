@@ -59,7 +59,6 @@ export default function RejectDiscountPage() {
     return true;
   }
 
-  /* ================= ACTIONS ================= */
 
   async function handleCreate() {
     if (!validate()) return;
