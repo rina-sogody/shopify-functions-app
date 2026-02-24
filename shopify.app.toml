@@ -1,7 +1,7 @@
 # Learn more about configuring your app at https://shopify.dev/docs/apps/tools/cli/configuration
 
 client_id = "5bca51793c3541da606da4153db2177a"
-name = "myolav-tiered-discount"
+name = "Olavson Discounts"
 application_url = "https://example.com"
 embedded = true
 

@@ -16,8 +16,10 @@ export default function App() {
   return (
     <AppProvider embedded apiKey={apiKey}>
       <s-app-nav>
-        <s-link href="/app/free-gift">Free Gift</s-link>
-        <s-link href="/app/flex-discount">Flex Discount</s-link>
+        <s-link href="/app/free-gift">Free Gift By Cart Threshold</s-link>
+        <s-link href="/app/free-gift-by-variant">Free Gift By Trigger Variant</s-link>
+        <s-link href="/app/flex-discount">Tiered Discount</s-link>
+        <s-link href="/app/reject-discounts">Reject Discounts</s-link>
       </s-app-nav>
       <Outlet />
     </AppProvider>

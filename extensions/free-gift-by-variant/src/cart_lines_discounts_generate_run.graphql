@@ -1,24 +1,18 @@
-query RunInput {
+query CartInput {
   cart {
     lines {
       id
-      quantity
       merchandise {
         ... on ProductVariant {
           id
           sku
         }
       }
-      cost {
-        totalAmount {
-          amount
-        }
-      }
     }
   }
   discount {
     discountClasses
-      metafield(namespace: "flex-discount", key: "config") {
+    metafield(namespace: "free-gift-by-variant", key: "config") {
       value
     }
   }

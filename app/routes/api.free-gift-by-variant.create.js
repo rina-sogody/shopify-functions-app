@@ -12,9 +12,16 @@ export async function action({ request }) {
       );
     }
     
-    if (!settings?.FREE_GIFT_SKU?.trim()) {
+    if (!settings?.triggerSku?.trim()) {
       return new Response(
-        JSON.stringify({ success: false, error: "Free gift SKU is required" }),
+        JSON.stringify({ success: false, error: "Trigger SKU is required" }),
+        { status: 400 }
+      );
+    }
+    
+    if (!settings?.giftSku?.trim()) {
+      return new Response(
+        JSON.stringify({ success: false, error: "Gift SKU is required" }),
         { status: 400 }
       );
     }
@@ -24,7 +31,7 @@ export async function action({ request }) {
     await saveDiscountSettings({
       request,
       nodeId: createResult.nodeId,
-      settings
+      settings,
     });
 
     await registerDiscountOnAppInstallation({
@@ -33,18 +40,14 @@ export async function action({ request }) {
         nodeId: createResult.nodeId,
         title,
       },
-    });    
+    });
 
     return new Response(
-      JSON.stringify({
-        success: true,
-        discount: createResult
-      }),
-      { status: 200, headers: { "Content-Type": "application/json" } }
+      JSON.stringify({ success: true }),
+      { status: 200 }
     );
-
   } catch (err) {
-    console.error("Create discount error:", err);
+    console.error(err);
     return new Response(
       JSON.stringify({ success: false, error: err.message }),
       { status: 500 }
@@ -70,23 +73,13 @@ async function createAppDiscount({ request, title }) {
     variables: {
       input: {
         title,
-        functionHandle: "free-gift-discount",
+        functionHandle: "free-gift-by-variant",
         discountClasses: ["PRODUCT"],
-        startsAt: new Date().toISOString()
-      }
+        startsAt: new Date().toISOString(),
+      },
     },
-    request
+    request,
   });
-
-  console.log("CREATE DISCOUNT RESULT:", JSON.stringify(result, null, 2));
-
-  if (result.errors) {
-    throw new Error(result.errors[0]?.message || "GraphQL error");
-  }
-
-  if (!result.data?.discountAutomaticAppCreate) {
-    throw new Error("Unexpected GraphQL response from Shopify");
-  }
 
   const payload = result.data.discountAutomaticAppCreate;
 
@@ -94,14 +87,10 @@ async function createAppDiscount({ request, title }) {
     throw new Error(payload.userErrors[0].message);
   }
 
-  const nodeId = payload.automaticAppDiscount.discountId;
-
   return {
-    appId: payload.automaticAppDiscount.id,
-    nodeId
+    nodeId: payload.automaticAppDiscount.discountId,
   };
 }
-
 
 async function saveDiscountSettings({ request, nodeId, settings }) {
   const mutation = `
@@ -115,65 +104,50 @@ async function saveDiscountSettings({ request, nodeId, settings }) {
   await shopifyGraphQLQuery({
     query: mutation,
     variables: {
-      metafields: [{
-        ownerId: nodeId,
-        namespace: "free-gift",
-        key: "config",
-        type: "json",
-        value: JSON.stringify({
-          threshold: settings.CART_TOTAL_THRESHOLD,
-          sku: settings.FREE_GIFT_SKU
-        })
-      }]
+      metafields: [
+        {
+          ownerId: nodeId,
+          namespace: "free-gift-by-variant",
+          key: "config",
+          type: "json",
+          value: JSON.stringify(settings),
+        },
+      ],
     },
-    request
+    request,
   });
 }
 
-
 async function registerDiscountOnAppInstallation({ request, discount }) {
-  const appInstallQuery = `
+  const query = `
     query {
       currentAppInstallation {
         id
         metafield(namespace: "app", key: "managed_discounts") {
-          id
           value
         }
       }
     }
   `;
 
-  const appInstallResult = await shopifyGraphQLQuery({
-    query: appInstallQuery,
-    request,
-  });
-
-  const installation = appInstallResult.data.currentAppInstallation;
-
-  if (!installation) {
-    throw new Error("App installation not found");
-  }
+  const result = await shopifyGraphQLQuery({ query, request });
+  const installation = result.data.currentAppInstallation;
 
   let discounts = [];
 
   if (installation.metafield?.value) {
-    try {
-      discounts = JSON.parse(installation.metafield.value).discounts || [];
-    } catch {
-      discounts = [];
-    }
+    discounts = JSON.parse(installation.metafield.value).discounts || [];
   }
 
   discounts.push({
     nodeId: discount.nodeId,
     title: discount.title,
-    type: "free-gift",
+    type: "free-gift-by-variant",
     createdAt: new Date().toISOString(),
   });
 
   const saveMutation = `
-    mutation saveAppDiscounts($metafields: [MetafieldsSetInput!]!) {
+    mutation save($metafields: [MetafieldsSetInput!]!) {
       metafieldsSet(metafields: $metafields) {
         userErrors { message }
       }

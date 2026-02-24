@@ -1,93 +1,419 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useLoaderData, useNavigate } from "react-router";
+import { getDiscountStatus } from "./api/getDiscountStatus";
+import { metadata } from "../extensions/flex-discount"; 
+import Breadcrumbs from "../components/Breadcrumbs"
+import ConfirmModal from "../components/ConfirmModal";
+import Toast from "../components/Toast";
 
-export default function TieredDiscountDashboardPage() {
-  const [extension, setExtension] = useState(null);
-  const [settings, setSettings] = useState({});
 
-  useEffect(() => {
-    async function loadExtension() {
+export async function loader({ request }) {
+  const url = new URL(request.url);
+  const discountId = url.searchParams.get("discountId");
+
+  const status = await getDiscountStatus({
+    request,
+    discountId,
+    type: "flex",
+  });
+
+  return {
+    status,
+    discountId,
+    mode: discountId ? "edit" : "create",
+  };
+}
+
+export default function FlexDiscountPage() {
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const navigate = useNavigate();
+  const { status, discountId, mode } = useLoaderData();
+  const isEdit = mode === "edit";
+
+  const [title, setTitle] = useState(status?.title || "");
+  const [loading, setLoading] = useState(false);
+
+  const [settings, setSettings] = useState(() => {
+    if (status?.metafield?.value) {
       try {
-        const mod = await import("../../extensions/flex-discount/src/cart_lines_discounts_generate_run.js");
-        console.log("Loaded module:", mod);
-        setExtension(mod.metadata);
-
-        const initialSettings = {};
-        mod.metadata.settings.forEach(s => {
-          initialSettings[s.key] = s.default;
-        });
-        setSettings(initialSettings);
-      } catch (err) {
-        console.error("Failed to load extension:", err);
+        const parsed = JSON.parse(status.metafield.value);
+  
+        return {
+          tiers: parsed.tiers || [],
+          eligibleSkus: parsed.eligibleSkus || [],
+        };
+      } catch {
+        return {
+          tiers: [],
+          eligibleSkus: [],
+        };
       }
     }
+  
+    return {
+      tiers: [],
+      eligibleSkus: [],
+    };
+  });
+  const [toast, setToast] = useState(null);
+  
+  function toastError(message) {
+    setToast({ message, tone: "error" });
+  }
+  
 
-    loadExtension();
-  }, []);
+  const CREATE_PATH = "/api/flex-discount/create";
+  const ACTIVATE_PATH = "/api/flex-discount/activate";
+  const DELETE_PATH = "/api/flex-discount/delete";
 
-  if (!extension) return <p>Loading...</p>;
+  function validate() {
+    if (!title?.trim()) {
+      toastError("Discount name is required");
+      return false;
+    }
+  
+    if (!settings?.tiers?.length) {
+      toastError("At least one discount tier is required");
+      return false;
+    }
+  
+    for (const tier of settings.tiers) {
+      if (tier.threshold === undefined || tier.threshold === null) {
+        toastError("Threshold is required");
+        return false;
+      }
+  
+      if (isNaN(tier.threshold) || tier.threshold <= 0) {
+        toastError("Threshold must be greater than 0");
+        return false;
+      }
+  
+      if (isNaN(tier.percent) || tier.percent <= 0 || tier.percent > 100) {
+        toastError("Discount percent must be between 1 and 100");
+        return false;
+      }
+    }
+  
+    return true;
+  }
 
-  function handleSettingChange(key, value) {
-    setSettings(prev => ({ ...prev, [key]: value }));
+  function getSortedSettings() {
+    const sorted = [...settings.tiers].sort(
+      (a, b) => a.threshold - b.threshold
+    );
+  
+    return {
+      tiers: sorted,
+      eligibleSkus: settings.eligibleSkus || [],
+    };
+  }
+  
+
+  async function handleCreate() {
+    if (!validate()) return;
+  
+    setLoading(true);
+  
+    try {
+      const res = await fetch(CREATE_PATH, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title,
+          settings: getSortedSettings(),
+        }),
+      });
+  
+      const data = await res.json();
+  
+      if (!data.success) {
+        toastError(data.error || "Error creating discount");
+        return;
+      }
+  
+      setToast({ message: "Discount created successfully!", tone: "success" });
+      setTimeout(() => navigate("/app"), 700);
+    } catch (err) {
+      toastError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleSave() {
+    if (!discountId) return toastError("Discount ID missing");
+    if (!validate()) return;
+  
+    setLoading(true);
+  
+    try {
+      const res = await fetch(ACTIVATE_PATH, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          discountId,
+          settings: getSortedSettings(),
+          requestedStatus: status?.status || "ACTIVE",
+        }),
+      });
+  
+      const data = await res.json();
+  
+      if (!data.success) {
+        toastError(data.error || "Error saving discount");
+        return;
+      }
+  
+      setToast({ message: "Discount updated successfully!", tone: "success" });
+      setTimeout(() => navigate("/app"), 700);
+    } catch (err) {
+      toastError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleDeleteConfirmed() {
+    if (!discountId) return;
+  
+    setLoading(true);
+
+    try {
+      const res = await fetch(DELETE_PATH, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ discountId }),
+      });
+
+      const data = await res.json();
+  
+      if (!data.success) {
+        toastError("Error deleting discount");
+        return;
+      }
+  
+      navigate("/app");
+      setTimeout(() => navigate("/app"), 700);
+    } catch (err) {
+      toastError(err.message);
+    } finally {
+      setLoading(false);
+      setConfirmOpen(false);
+    }
   }
 
   return (
-    <s-page heading="Dashboard">
-      <s-section heading={extension?.name}>
-        <s-paragraph>{extension?.description}</s-paragraph>
+    <s-page
+      backAction={{ content: "Discounts", url: "/app" }}
+    >
+      <Breadcrumbs/>
+      <s-section>
+      <h2 style={{ fontSize: "17px", marginTop: "0", marginBottom: "0"}}>{metadata.name}</h2>
+      <p style={{ fontSize: "15px" }}>{metadata.description}</p>
 
-        <s-section heading="Settings">
-          {extension?.settings.map(setting => (
-            <div key={setting.key} style={{ marginBottom: "1rem" }}>
+        <div style={{ marginBottom: "1rem" }}>
+          <label>
+            Discount Name: {" "}
+            <input
+              type="text"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              disabled={loading}
+            />
+          </label>
+        </div>
+
+        <s-section heading="Discount Tiers">
+          {settings.tiers.map((tier, index) => (
+            <div
+              key={index}
+              style={{
+                display: "flex",
+                gap: "1rem",
+                marginBottom: "1rem",
+                alignItems: "flex-end",
+                flexWrap: "wrap",
+              }}
+            >
               <label>
-                {setting.label}:
-                {setting.type === "json" ? (
-                  <textarea
-                    style={{ width: "100%", height: "6rem" }}
-                    value={settings[setting.key]}
-                    onChange={e => handleSettingChange(setting.key, e.target.value)}
-                  />
-                ) : (
-                  <input
-                    type={setting.type}
-                    value={settings[setting.key]}
-                    onChange={e =>
-                      handleSettingChange(
-                        setting.key,
-                        setting.type === "number"
-                          ? parseInt(e.target.value, 10)
-                          : e.target.value
-                      )
-                    }
-                  />
-                )}
+                Spend (€): {" "}
+                <input
+                  type="number"
+                  min="0"
+                  value={tier.threshold / 100}
+                  disabled={loading}
+                  onChange={(e) => {
+                    const value = parseFloat(e.target.value || 0);
+                    const updated = [...settings.tiers];
+                    updated[index].threshold = Math.round(value * 100);
+                    setSettings({ ...settings, tiers: updated });
+                  }}
+                />
               </label>
+
+              <label>
+                Discount (%): {" "}
+                <input
+                  type="number"
+                  min="1"
+                  max="100"
+                  value={tier.percent}
+                  disabled={loading}
+                  onChange={(e) => {
+                    const updated = [...settings.tiers];
+                    updated[index].percent =
+                      parseInt(e.target.value || 0, 10);
+                      setSettings({ ...settings, tiers: updated });
+                  }}
+                />
+              </label>
+
+              <label>
+                Message: {" "}
+                <input
+                  type="text"
+                  value={tier.message}
+                  disabled={loading}
+                  onChange={(e) => {
+                    const updated = [...settings.tiers];
+                    updated[index].message = e.target.value;
+                    setSettings({ ...settings, tiers: updated });
+                  }}
+                />
+              </label>
+
+              <s-button
+                tone="critical"
+                disabled={loading}
+                onClick={() => {
+                  const updated = settings.tiers.filter(
+                    (_, i) => i !== index
+                  );
+                  setSettings({ tiers: updated });
+                }}
+                type="button"
+              >
+                Remove
+              </s-button>
             </div>
           ))}
+
+          <s-button
+            variant="secondary"
+            disabled={loading}
+            onClick={() => {
+              setSettings({
+                tiers: [
+                  ...settings.tiers,
+                  { threshold: 0, percent: 10, message: "" },
+                ],
+              });
+            }}
+            type="button"
+          >
+            + Add Tier
+          </s-button>
         </s-section>
 
-        <s-button
-          onClick={() => {
-            let parsedSettings = { ...settings };
+        <s-section heading="Eligible Products (SKUs)">
 
-            // Try parsing JSON fields
-            extension?.settings.forEach(s => {
-              if (s.type === "json") {
-                try {
-                  parsedSettings[s.key] = JSON.parse(parsedSettings[s.key]);
-                } catch (err) {
-                  alert(`Invalid JSON in ${s.label}`);
-                  return;
-                }
-              }
-            });
+          {settings.eligibleSkus?.map((sku, index) => (
+            <div
+              key={index}
+              style={{
+                display: "flex",
+                gap: "1rem",
+                marginBottom: "1rem",
+                alignItems: "center",
+              }}
+            >
+              <label>
+                SKU: {" "}
+                <input
+                  type="text"
+                  value={sku}
+                  disabled={loading}
+                  onChange={(e) => {
+                    const updated = [...settings.eligibleSkus];
+                    updated[index] = e.target.value;
+                    setSettings({ ...settings, eligibleSkus: updated });
+                  }}
+                />
+              </label>
 
-            console.log("Saved settings:", parsedSettings);
-            alert("Settings saved! Check console for details.");
-          }}
-        >
-          Save Settings
-        </s-button>
+              <s-button
+                tone="critical"
+                disabled={loading}
+                onClick={() => {
+                  const updated = settings.eligibleSkus.filter((_, i) => i !== index);
+                  setSettings({ ...settings, eligibleSkus: updated });
+                }}
+                type="button"
+              >
+                Remove
+              </s-button>
+            </div>
+          ))}
+
+          <s-button
+            variant="secondary"
+            disabled={loading}
+            onClick={() => {
+              setSettings({
+                ...settings,
+                eligibleSkus: [...(settings.eligibleSkus || []), ""],
+              });
+            }}
+            type="button"
+          >
+            + Add SKU
+          </s-button>
+
+        </s-section>
+
+        <div style={{ marginTop: "1.5rem" }}>
+          <s-button
+            onClick={isEdit ? handleSave : handleCreate}
+            disabled={loading}
+            type="button"
+          >
+            {loading
+              ? "Processing..."
+              : isEdit
+              ? "Save Changes"
+              : "Create Discount"}
+          </s-button>
+        </div>
+
+        {isEdit && (
+          <div style={{ marginTop: "1rem" }}>
+            <s-button
+              tone="critical"
+              onClick={() => setConfirmOpen(true)}
+              disabled={loading}
+              type="button"
+            >
+              {loading ? "Processing..." : "Delete"}
+            </s-button>
+          </div>
+        )}
       </s-section>
+      {confirmOpen && (
+        <ConfirmModal
+          open={confirmOpen}
+          title="Are you sure you want to delete this discount?"
+          confirmLabel="Yes"
+          cancelLabel="No"
+          loading={loading}
+          onCancel={() => setConfirmOpen(false)}
+          onConfirm={handleDeleteConfirmed}
+        />
+      )}
+      <Toast
+        message={toast?.message}
+        tone={toast?.tone}
+        onClose={() => setToast(null)}
+      />
     </s-page>
   );
 }

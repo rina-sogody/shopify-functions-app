@@ -12,11 +12,27 @@ export async function action({ request }) {
       );
     }
     
-    if (!settings?.FREE_GIFT_SKU?.trim()) {
+    if (!settings?.tiers?.length) {
       return new Response(
-        JSON.stringify({ success: false, error: "Free gift SKU is required" }),
+        JSON.stringify({ success: false, error: "At least one tier is required" }),
         { status: 400 }
       );
+    }
+    
+    for (const tier of settings.tiers) {
+      if (tier.threshold === undefined || tier.threshold === null || tier.threshold <= 0) {
+        return new Response(
+          JSON.stringify({ success: false, error: "Threshold must be greater than 0" }),
+          { status: 400 }
+        );
+      }
+    
+      if (tier.percent <= 0 || tier.percent > 100) {
+        return new Response(
+          JSON.stringify({ success: false, error: "Percent must be 1–100" }),
+          { status: 400 }
+        );
+      }
     }
 
     const createResult = await createAppDiscount({ request, title });
@@ -70,7 +86,7 @@ async function createAppDiscount({ request, title }) {
     variables: {
       input: {
         title,
-        functionHandle: "free-gift-discount",
+        functionHandle: "flex-discount",
         discountClasses: ["PRODUCT"],
         startsAt: new Date().toISOString()
       }
@@ -117,13 +133,13 @@ async function saveDiscountSettings({ request, nodeId, settings }) {
     variables: {
       metafields: [{
         ownerId: nodeId,
-        namespace: "free-gift",
+        namespace: "flex-discount",
         key: "config",
         type: "json",
         value: JSON.stringify({
-          threshold: settings.CART_TOTAL_THRESHOLD,
-          sku: settings.FREE_GIFT_SKU
-        })
+          tiers: settings.tiers,
+          eligibleSkus: settings.eligibleSkus
+        })                
       }]
     },
     request
@@ -168,7 +184,7 @@ async function registerDiscountOnAppInstallation({ request, discount }) {
   discounts.push({
     nodeId: discount.nodeId,
     title: discount.title,
-    type: "free-gift",
+    type: "flex-discount",
     createdAt: new Date().toISOString(),
   });
 

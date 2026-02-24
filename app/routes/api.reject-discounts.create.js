@@ -3,18 +3,11 @@ import { shopifyGraphQLQuery } from "../shopify-graphql.js";
 export async function action({ request }) {
   try {
     const body = await request.json();
-    const { title, settings } = body;
+    const { title } = body;
 
     if (!title?.trim()) {
       return new Response(
-        JSON.stringify({ success: false, error: "Discount title is required" }),
-        { status: 400 }
-      );
-    }
-    
-    if (!settings?.FREE_GIFT_SKU?.trim()) {
-      return new Response(
-        JSON.stringify({ success: false, error: "Free gift SKU is required" }),
+        JSON.stringify({ success: false, error: "Campaign name required" }),
         { status: 400 }
       );
     }
@@ -24,7 +17,6 @@ export async function action({ request }) {
     await saveDiscountSettings({
       request,
       nodeId: createResult.nodeId,
-      settings
     });
 
     await registerDiscountOnAppInstallation({
@@ -33,16 +25,12 @@ export async function action({ request }) {
         nodeId: createResult.nodeId,
         title,
       },
-    });    
+    });
 
     return new Response(
-      JSON.stringify({
-        success: true,
-        discount: createResult
-      }),
+      JSON.stringify({ success: true, discount: createResult }),
       { status: 200, headers: { "Content-Type": "application/json" } }
     );
-
   } catch (err) {
     console.error("Create discount error:", err);
     return new Response(
@@ -70,40 +58,24 @@ async function createAppDiscount({ request, title }) {
     variables: {
       input: {
         title,
-        functionHandle: "free-gift-discount",
-        discountClasses: ["PRODUCT"],
-        startsAt: new Date().toISOString()
-      }
+        functionHandle: "reject-discounts",
+        discountClasses: ["PRODUCT", "ORDER"],
+        startsAt: new Date().toISOString(),
+      },
     },
-    request
+    request,
   });
-
-  console.log("CREATE DISCOUNT RESULT:", JSON.stringify(result, null, 2));
-
-  if (result.errors) {
-    throw new Error(result.errors[0]?.message || "GraphQL error");
-  }
-
-  if (!result.data?.discountAutomaticAppCreate) {
-    throw new Error("Unexpected GraphQL response from Shopify");
-  }
 
   const payload = result.data.discountAutomaticAppCreate;
 
-  if (payload.userErrors?.length) {
-    throw new Error(payload.userErrors[0].message);
-  }
-
-  const nodeId = payload.automaticAppDiscount.discountId;
+  if (payload.userErrors?.length) throw new Error(payload.userErrors[0].message);
 
   return {
-    appId: payload.automaticAppDiscount.id,
-    nodeId
+    nodeId: payload.automaticAppDiscount.discountId,
   };
 }
 
-
-async function saveDiscountSettings({ request, nodeId, settings }) {
+async function saveDiscountSettings({ request, nodeId }) {
   const mutation = `
     mutation saveConfig($metafields: [MetafieldsSetInput!]!) {
       metafieldsSet(metafields: $metafields) {
@@ -115,21 +87,19 @@ async function saveDiscountSettings({ request, nodeId, settings }) {
   await shopifyGraphQLQuery({
     query: mutation,
     variables: {
-      metafields: [{
-        ownerId: nodeId,
-        namespace: "free-gift",
-        key: "config",
-        type: "json",
-        value: JSON.stringify({
-          threshold: settings.CART_TOTAL_THRESHOLD,
-          sku: settings.FREE_GIFT_SKU
-        })
-      }]
+      metafields: [
+        {
+          ownerId: nodeId,
+          namespace: "reject-discounts",
+          key: "config",
+          type: "json",
+          value: JSON.stringify({ enabled: false }),
+        },
+      ],
     },
-    request
+    request,
   });
 }
-
 
 async function registerDiscountOnAppInstallation({ request, discount }) {
   const appInstallQuery = `
@@ -137,51 +107,37 @@ async function registerDiscountOnAppInstallation({ request, discount }) {
       currentAppInstallation {
         id
         metafield(namespace: "app", key: "managed_discounts") {
-          id
           value
         }
       }
     }
   `;
 
-  const appInstallResult = await shopifyGraphQLQuery({
-    query: appInstallQuery,
-    request,
-  });
+  const appInstallResult = await shopifyGraphQLQuery({ query: appInstallQuery, request });
 
   const installation = appInstallResult.data.currentAppInstallation;
-
-  if (!installation) {
-    throw new Error("App installation not found");
-  }
 
   let discounts = [];
 
   if (installation.metafield?.value) {
-    try {
-      discounts = JSON.parse(installation.metafield.value).discounts || [];
-    } catch {
-      discounts = [];
-    }
+    discounts = JSON.parse(installation.metafield.value).discounts || [];
   }
 
   discounts.push({
     nodeId: discount.nodeId,
     title: discount.title,
-    type: "free-gift",
+    type: "reject-discounts",
     createdAt: new Date().toISOString(),
   });
 
-  const saveMutation = `
-    mutation saveAppDiscounts($metafields: [MetafieldsSetInput!]!) {
-      metafieldsSet(metafields: $metafields) {
-        userErrors { message }
-      }
-    }
-  `;
-
   await shopifyGraphQLQuery({
-    query: saveMutation,
+    query: `
+      mutation saveAppDiscounts($metafields: [MetafieldsSetInput!]!) {
+        metafieldsSet(metafields: $metafields) {
+          userErrors { message }
+        }
+      }
+    `,
     variables: {
       metafields: [
         {
