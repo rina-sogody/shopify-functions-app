@@ -52,9 +52,6 @@ export default function FlexDiscountPage() {
     };
   });
   const [toast, setToast] = useState(null);
-  // function toastSuccess(message) {
-  //   setToast({ message, tone: "success" });
-  // }
   
   function toastError(message) {
     setToast({ message, tone: "error" });
@@ -66,27 +63,33 @@ export default function FlexDiscountPage() {
   const DELETE_PATH = "/api/flex-discount/delete";
 
   function validate() {
-    if (!title.trim()) {
-      toastError("Discount name is required.");
+    if (!title?.trim()) {
+      toastError("Discount name is required");
       return false;
     }
-
-    if (!settings.tiers.length) {
-      toastError("At least one tier is required.");
+  
+    if (!settings?.tiers?.length) {
+      toastError("At least one discount tier is required");
       return false;
     }
-
+  
     for (const tier of settings.tiers) {
-      if (tier.threshold <= 0) {
-        toastError("Threshold must be greater than 0.");
+      if (tier.threshold === undefined || tier.threshold === null) {
+        toastError("Threshold is required");
         return false;
       }
-      if (tier.percent <= 0 || tier.percent > 100) {
-        toastError("Discount percent must be between 1 and 100.");
+  
+      if (isNaN(tier.threshold) || tier.threshold <= 0) {
+        toastError("Threshold must be greater than 0");
+        return false;
+      }
+  
+      if (isNaN(tier.percent) || tier.percent <= 0 || tier.percent > 100) {
+        toastError("Discount percent must be between 1 and 100");
         return false;
       }
     }
-
+  
     return true;
   }
 
@@ -104,9 +107,9 @@ export default function FlexDiscountPage() {
 
   async function handleCreate() {
     if (!validate()) return;
-
+  
     setLoading(true);
-
+  
     try {
       const res = await fetch(CREATE_PATH, {
         method: "POST",
@@ -116,26 +119,29 @@ export default function FlexDiscountPage() {
           settings: getSortedSettings(),
         }),
       });
-
+  
       const data = await res.json();
-
-      if (data.success) {
-        navigate("/app");
-      } else {
-        console.error("Create error:", data);
-        toastError(JSON.stringify(data, null, 2));
+  
+      if (!data.success) {
+        toastError(data.error || "Error creating discount");
+        return;
       }
-      
+  
+      setToast({ message: "Discount created successfully!", tone: "success" });
+      setTimeout(() => navigate("/app"), 700);
+    } catch (err) {
+      toastError(err.message);
     } finally {
       setLoading(false);
     }
   }
 
   async function handleSave() {
+    if (!discountId) return toastError("Discount ID missing");
     if (!validate()) return;
-
+  
     setLoading(true);
-
+  
     try {
       const res = await fetch(ACTIVATE_PATH, {
         method: "POST",
@@ -146,9 +152,18 @@ export default function FlexDiscountPage() {
           requestedStatus: status?.status || "ACTIVE",
         }),
       });
-
+  
       const data = await res.json();
-      if (!data.success) toastError("Error saving");
+  
+      if (!data.success) {
+        toastError(data.error || "Error saving discount");
+        return;
+      }
+  
+      setToast({ message: "Discount updated successfully!", tone: "success" });
+      setTimeout(() => navigate("/app"), 700);
+    } catch (err) {
+      toastError(err.message);
     } finally {
       setLoading(false);
     }
@@ -174,6 +189,7 @@ export default function FlexDiscountPage() {
       }
   
       navigate("/app");
+      setTimeout(() => navigate("/app"), 700);
     } catch (err) {
       toastError(err.message);
     } finally {
@@ -226,7 +242,7 @@ export default function FlexDiscountPage() {
                     const value = parseFloat(e.target.value || 0);
                     const updated = [...settings.tiers];
                     updated[index].threshold = Math.round(value * 100);
-                    setSettings({ tiers: updated });
+                    setSettings({ ...settings, tiers: updated });
                   }}
                 />
               </label>
@@ -243,7 +259,7 @@ export default function FlexDiscountPage() {
                     const updated = [...settings.tiers];
                     updated[index].percent =
                       parseInt(e.target.value || 0, 10);
-                    setSettings({ tiers: updated });
+                      setSettings({ ...settings, tiers: updated });
                   }}
                 />
               </label>
@@ -257,7 +273,7 @@ export default function FlexDiscountPage() {
                   onChange={(e) => {
                     const updated = [...settings.tiers];
                     updated[index].message = e.target.value;
-                    setSettings({ tiers: updated });
+                    setSettings({ ...settings, tiers: updated });
                   }}
                 />
               </label>

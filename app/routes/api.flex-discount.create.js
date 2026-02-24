@@ -5,11 +5,34 @@ export async function action({ request }) {
     const body = await request.json();
     const { title, settings } = body;
 
-    if (!title) {
+    if (!title?.trim()) {
       return new Response(
-        JSON.stringify({ success: false, error: "Missing discount title" }),
+        JSON.stringify({ success: false, error: "Discount title is required" }),
         { status: 400 }
       );
+    }
+    
+    if (!settings?.tiers?.length) {
+      return new Response(
+        JSON.stringify({ success: false, error: "At least one tier is required" }),
+        { status: 400 }
+      );
+    }
+    
+    for (const tier of settings.tiers) {
+      if (tier.threshold === undefined || tier.threshold === null || tier.threshold <= 0) {
+        return new Response(
+          JSON.stringify({ success: false, error: "Threshold must be greater than 0" }),
+          { status: 400 }
+        );
+      }
+    
+      if (tier.percent <= 0 || tier.percent > 100) {
+        return new Response(
+          JSON.stringify({ success: false, error: "Percent must be 1–100" }),
+          { status: 400 }
+        );
+      }
     }
 
     const createResult = await createAppDiscount({ request, title });
