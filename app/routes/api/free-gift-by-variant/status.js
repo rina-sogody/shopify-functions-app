@@ -16,7 +16,7 @@ export async function getStatus({ request, discountId }) {
                   status
                   }
             }
-        metafield(namespace: "free-gift", key: "config") {
+        metafield(namespace: "free-gift-by-variant", key: "config") {
           value
         }
       }

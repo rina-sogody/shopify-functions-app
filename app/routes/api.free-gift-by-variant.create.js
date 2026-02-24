@@ -5,9 +5,23 @@ export async function action({ request }) {
     const body = await request.json();
     const { title, settings } = body;
 
-    if (!title) {
+    if (!title?.trim()) {
       return new Response(
-        JSON.stringify({ success: false, error: "Missing discount title" }),
+        JSON.stringify({ success: false, error: "Discount title is required" }),
+        { status: 400 }
+      );
+    }
+    
+    if (!settings?.triggerSku?.trim()) {
+      return new Response(
+        JSON.stringify({ success: false, error: "Trigger SKU is required" }),
+        { status: 400 }
+      );
+    }
+    
+    if (!settings?.giftSku?.trim()) {
+      return new Response(
+        JSON.stringify({ success: false, error: "Gift SKU is required" }),
         { status: 400 }
       );
     }

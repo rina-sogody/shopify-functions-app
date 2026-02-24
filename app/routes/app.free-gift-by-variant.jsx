@@ -1,10 +1,11 @@
 import { useState, useEffect } from "react";
 import { useLoaderData, useNavigate } from "react-router";
+
 import { getStatus } from "./api/free-gift-by-variant/status";
+
 import Breadcrumbs from "../components/Breadcrumbs";
 import ConfirmModal from "../components/ConfirmModal";
 import Toast from "../components/Toast";
-
 
 
 export async function loader({ request }) {
@@ -28,55 +29,42 @@ export async function loader({ request }) {
   };
 }
 
-export default function FreeGiftVariantPage() {
-  const [confirmOpen, setConfirmOpen] = useState(false);
-  const navigate = useNavigate();
-  const loaderData = useLoaderData() || {};
-  const { status, discountId, mode } = loaderData;
-  const isEdit = mode === "edit";
-  const [title, setTitle] = useState(status?.title || "");
-  const [loading, setLoading] = useState(false);
 
+const CREATE_PATH = "/api/free-gift-by-variant/create";
+const ACTIVATE_PATH = "/api/free-gift-by-variant/activate";
+const DELETE_PATH = "/api/free-gift-by-variant/delete";
+
+export default function FreeGiftVariantPage() {
+  const navigate = useNavigate();
+  const { status, discountId, mode } = useLoaderData() || {};
+
+  const isEdit = mode === "edit";
+
+  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState(null);
 
-  // function toastSuccess(message) {
-  //   setToast({ message, tone: "success" });
-  // }
-  
-  function toastError(message) {
-    setToast({ message, tone: "error" });
-  }
-
+  const [title, setTitle] = useState(status?.title || "");
   const [settings, setSettings] = useState({});
-  useEffect(() => {
-    if (!status?.metafield?.value) return;
-    try {
-      const parsed = JSON.parse(status.metafield.value);
-      setSettings({
-        triggerSku: parsed.triggerSku || "",
-        giftSku: parsed.giftSku || "",
-      });
-    } catch (e) {
-      console.error("Metafield parse error", e);
-  }
-  }, [status]);
 
-  const CREATE_PATH = "/api/free-gift-by-variant/create";
-  const ACTIVATE_PATH = "/api/free-gift-by-variant/activate";
-  const DELETE_PATH = "/api/free-gift-by-variant/delete";
+  const toastError = (message) => setToast({ message, tone: "error" });
+  const toastSuccess = (message) => setToast({ message, tone: "success" });
+
+  const updateSetting = (key, value) =>
+    setSettings((prev) => ({ ...prev, [key]: value }));
 
   function validate() {
-    if (!title.trim()) {
+    if (!title?.trim()) {
       toastError("Discount name is required");
       return false;
     }
 
-    if (!settings.triggerSku?.trim()) {
+    if (!settings?.triggerSku?.trim()) {
       toastError("Trigger SKU is required");
       return false;
     }
 
-    if (!settings.giftSku?.trim()) {
+    if (!settings?.giftSku?.trim()) {
       toastError("Gift SKU is required");
       return false;
     }
@@ -84,11 +72,24 @@ export default function FreeGiftVariantPage() {
     return true;
   }
 
+  useEffect(() => {
+    if (!status?.metafield?.value) return;
+
+    try {
+      const parsed = JSON.parse(status.metafield.value);
+      setSettings({
+        triggerSku: parsed.triggerSku ?? "",
+        giftSku: parsed.giftSku ?? "",
+      });
+    } catch (e) {
+      console.error("Metafield parse error", e);
+    }
+  }, [status]);
+
   async function handleCreate() {
     if (!validate()) return;
 
     setLoading(true);
-
     try {
       const res = await fetch(CREATE_PATH, {
         method: "POST",
@@ -98,20 +99,27 @@ export default function FreeGiftVariantPage() {
 
       const data = await res.json();
 
-      if (data.success) navigate("/app");
-      else toastError("Error creating discount");
+      if (!data.success) {
+        toastError(data.error || "Error creating discount");
+        return;
+      }
+
+      toastSuccess("Discount created successfully!");
+      setTimeout(() => navigate("/app"), 700);
+    } catch (err) {
+      toastError(err.message);
     } finally {
       setLoading(false);
     }
   }
 
   async function handleSave() {
+    if (!discountId) return toastError("Discount ID missing");
     if (!validate()) return;
 
     setLoading(true);
-
     try {
-      await fetch(ACTIVATE_PATH, {
+      const res = await fetch(ACTIVATE_PATH, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -120,6 +128,18 @@ export default function FreeGiftVariantPage() {
           requestedStatus: status?.status || "ACTIVE",
         }),
       });
+
+      const data = await res.json();
+
+      if (!data.success) {
+        toastError(data.error || "Error saving changes");
+        return;
+      }
+
+      toastSuccess("Settings updated successfully!");
+      setTimeout(() => navigate("/app"), 700);
+    } catch (err) {
+      toastError(err.message);
     } finally {
       setLoading(false);
     }
@@ -127,22 +147,22 @@ export default function FreeGiftVariantPage() {
 
   async function handleDeleteConfirmed() {
     if (!discountId) return;
-  
+
     setLoading(true);
-  
     try {
       const res = await fetch(DELETE_PATH, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ discountId }),
       });
+
       const data = await res.json();
-  
+
       if (!data.success) {
         toastError("Error deleting discount");
         return;
       }
-  
+
       navigate("/app");
     } catch (err) {
       toastError(err.message);
@@ -153,15 +173,17 @@ export default function FreeGiftVariantPage() {
   }
 
   return (
-    <s-page
-      backAction={{ content: "Discounts", url: "/app" }}
-    >
-      <Breadcrumbs/>
+    <s-page backAction={{ content: "Discounts", url: "/app" }}>
+      <Breadcrumbs />
+
       <s-section>
-      <h2 style={{ fontSize: "17px", marginTop: "0"}}>Free Gift triggered by variant</h2>
+        <h2 style={{ fontSize: "17px", marginTop: 0 }}>
+          Free Gift triggered by variant
+        </h2>
+
         <div style={{ marginBottom: "1rem" }}>
           <label>
-            Discount Name: {" "}
+            Discount Name:{" "}
             <input
               type="text"
               value={title}
@@ -173,34 +195,24 @@ export default function FreeGiftVariantPage() {
 
         <div style={{ marginBottom: "1rem" }}>
           <label>
-            Trigger Variant SKU: {" "}
+            Trigger Variant SKU:{" "}
             <input
               type="text"
               value={settings.triggerSku || ""}
               disabled={loading}
-              onChange={(e) =>
-                setSettings({
-                  ...settings,
-                  triggerSku: e.target.value,
-                })
-              }
+              onChange={(e) => updateSetting("triggerSku", e.target.value)}
             />
           </label>
         </div>
 
         <div style={{ marginBottom: "1rem" }}>
           <label>
-            Gift Variant SKU: {" "}
+            Gift Variant SKU:{" "}
             <input
               type="text"
               value={settings.giftSku || ""}
               disabled={loading}
-              onChange={(e) =>
-                setSettings({
-                  ...settings,
-                  giftSku: e.target.value,
-                })
-              }
+              onChange={(e) => updateSetting("giftSku", e.target.value)}
             />
           </label>
         </div>
@@ -231,8 +243,8 @@ export default function FreeGiftVariantPage() {
             </s-button>
           </div>
         )}
-
       </s-section>
+
       {confirmOpen && (
         <ConfirmModal
           open={confirmOpen}
@@ -244,6 +256,7 @@ export default function FreeGiftVariantPage() {
           onConfirm={handleDeleteConfirmed}
         />
       )}
+
       <Toast
         message={toast?.message}
         tone={toast?.tone}
