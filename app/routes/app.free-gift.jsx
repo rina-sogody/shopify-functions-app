@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useLoaderData, useNavigate } from "react-router";
 
-import { getStatus } from "./api/free-gift-discount/status";
+import { getDiscountStatus } from "./api/getDiscountStatus";
 import { metadata } from "../extensions/free-gift";
 
 import Breadcrumbs from "../components/Breadcrumbs";
@@ -13,7 +13,11 @@ export async function loader({ request }) {
   const url = new URL(request.url);
   const discountId = url.searchParams.get("discountId");
 
-  const status = await getStatus({ request, discountId });
+  const status = await getDiscountStatus({
+    request,
+    discountId,
+    type: "freeGift",
+  });
 
   return {
     status,

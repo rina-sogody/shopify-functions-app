@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useLoaderData, useNavigate } from "react-router";
 
-import { getStatus } from "./api/free-gift-by-variant/status";
+import { getDiscountStatus } from "./api/getDiscountStatus";
 
 import Breadcrumbs from "../components/Breadcrumbs";
 import ConfirmModal from "../components/ConfirmModal";
@@ -16,7 +16,11 @@ export async function loader({ request }) {
 
   if (discountId) {
     try {
-      status = await getStatus({ request, discountId });
+      status = await getDiscountStatus({
+        request,
+        discountId,
+        type: "freeGiftVariant",
+      });
     } catch {
       status = null;
     }

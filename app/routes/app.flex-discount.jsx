@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useLoaderData, useNavigate } from "react-router";
-import { getStatus } from "./api/flex-discount/status";
+import { getDiscountStatus } from "./api/getDiscountStatus";
 import { metadata } from "../extensions/flex-discount"; 
 import Breadcrumbs from "../components/Breadcrumbs"
 import ConfirmModal from "../components/ConfirmModal";
@@ -11,7 +11,11 @@ export async function loader({ request }) {
   const url = new URL(request.url);
   const discountId = url.searchParams.get("discountId");
 
-  const status = await getStatus({ request, discountId });
+  const status = await getDiscountStatus({
+    request,
+    discountId,
+    type: "flex",
+  });
 
   return {
     status,

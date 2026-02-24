@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useLoaderData, useNavigate } from "react-router";
 
-import { getStatus } from "./api/reject-discounts/status";
+import { getDiscountStatus } from "./api/getDiscountStatus";
 
 import Breadcrumbs from "../components/Breadcrumbs";
 import ConfirmModal from "../components/ConfirmModal";
@@ -15,7 +15,11 @@ export async function loader({ request }) {
 
   if (discountId) {
     try {
-      status = await getStatus({ request, discountId });
+      status = await getDiscountStatus({
+        request,
+        discountId,
+        type: "reject",
+      });
     } catch (err) {
       console.error("Loader error:", err);
     }
