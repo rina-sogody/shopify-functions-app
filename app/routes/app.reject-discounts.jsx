@@ -45,6 +45,8 @@ export default function RejectDiscountPage() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [toast, setToast] = useState(null);
+  const [isActive, setIsActive] = useState(status?.status === "ACTIVE");
+
 
   const [title, setTitle] = useState(status?.title || "");
 
@@ -118,6 +120,37 @@ export default function RejectDiscountPage() {
     }
   }
 
+  async function handleStatusToggle(newStatus) {
+    if (!discountId) return toastError("Discount ID not found.");
+
+    setLoading(true);
+    try {
+      const res = await fetch(ACTIVATE_PATH, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          discountId,
+          requestedStatus: newStatus,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        setIsActive(newStatus === "ACTIVE");
+        toastSuccess(
+          `Discount ${newStatus.toLowerCase()}d and settings saved!`
+        );
+      } else {
+        toastError("Error: " + JSON.stringify(data.errors || data.error));
+      }
+    } catch (err) {
+      toastError("Local JS Error: " + err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   async function handleDeleteConfirmed() {
     if (!discountId) return;
 
@@ -153,7 +186,14 @@ export default function RejectDiscountPage() {
         <s-stack gap="200">
           <div style={{ marginBottom: "10px "}}>
 
-          <s-heading variant="headingMd">Reject discount</s-heading>
+          <div style={{ display: "flex", flexDirection: "row", gap: "10px"}}>
+            <s-heading variant="headingMd">Reject Discount</s-heading>
+            {isEdit && (
+              <s-badge tone={isActive ? "success" : "info"}>
+                {isActive ? "Active" : "Inactive"}
+              </s-badge>
+            )}
+          </div>
           </div>
 
           <s-text-field
@@ -169,7 +209,36 @@ export default function RejectDiscountPage() {
             </s-text>
           </div>
 
-          <div style={{ marginBottom: "10px"}}>
+          {isEdit && (
+          <s-inline-stack gap="200" wrap>
+            <div style={{ display: "flex", flexDirection: "row", gap: "10px", marginBottom: "10px"}}>
+
+              <s-button
+                onClick={() => handleStatusToggle("ACTIVE")}
+                disabled={isActive || loading}
+              >
+                Activate
+              </s-button>
+
+              <s-button
+                onClick={() => handleStatusToggle("DEACTIVE")}
+                disabled={!isActive || loading}
+              >
+                Deactivate
+              </s-button>
+
+              <s-button
+                tone="critical"
+                onClick={() => setConfirmOpen(true)}
+                disabled={loading}
+              >
+                Delete discount
+              </s-button>
+            </div>
+            </s-inline-stack>
+          )}
+
+          <div>
             <s-button
               onClick={isEdit ? handleSave : handleCreate}
               disabled={loading}
@@ -177,16 +246,6 @@ export default function RejectDiscountPage() {
               {loading ? "Processing..." : isEdit ? "Save changes" : "Create"}
             </s-button>
           </div>
-
-          {isEdit && (
-            <s-button
-              tone="critical"
-              onClick={() => setConfirmOpen(true)}
-              disabled={loading}
-            >
-              Delete
-            </s-button>
-          )}
         </s-stack>
       </s-section>
 
