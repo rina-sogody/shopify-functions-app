@@ -34,7 +34,7 @@ export async function loader({ request }) {
 
 const CREATE_PATH = "/api/discount/create";
 const ACTIVATE_PATH = "/api/discount/activate";
-const DELETE_PATH = "/api/free-gift-by-variant/delete";
+const DELETE_PATH = "/api/discount/delete";
 
 export default function FreeGiftVariantPage() {
   const navigate = useNavigate();

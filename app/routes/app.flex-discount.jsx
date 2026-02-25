@@ -65,7 +65,7 @@ export default function FlexDiscountPage() {
 
   const CREATE_PATH = "/api/discount/create";
   const ACTIVATE_PATH = "/api/discount/activate";
-  const DELETE_PATH = "/api/flex-discount/delete";
+  const DELETE_PATH = "/api/discount/delete";
 
   function validate() {
     if (!title?.trim()) {

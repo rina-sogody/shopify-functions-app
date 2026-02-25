@@ -28,7 +28,7 @@ export async function loader({ request }) {
 
 const CREATE_PATH = "/api/discount/create";
 const ACTIVATE_PATH = "/api/discount/activate";
-const DELETE_PATH = "/api/free-gift-discount/delete";
+const DELETE_PATH = "/api/discount/delete";
 
 export default function DashboardPage() {
   const navigate = useNavigate();

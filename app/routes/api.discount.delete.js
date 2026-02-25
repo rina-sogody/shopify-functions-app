@@ -2,29 +2,22 @@ import { shopifyGraphQLQuery } from "../shopify-graphql.js";
 
 export async function action({ request }) {
   try {
-    const body = await request.json();
-    const { discountId } = body;
+    const { discountId } = await request.json();
 
     if (!discountId) {
-      return new Response(
-        JSON.stringify({ success: false, error: "Missing discountId" }),
+      return Response.json(
+        { success: false, error: "Missing discountId" },
         { status: 400 }
       );
     }
 
     await deleteDiscount({ request, discountId });
-
     await removeFromAppInstallation({ request, discountId });
 
-    return new Response(
-      JSON.stringify({ success: true }),
-      { status: 200, headers: { "Content-Type": "application/json" } }
-    );
-
+    return Response.json({ success: true });
   } catch (err) {
-    console.error("Delete error:", err);
-    return new Response(
-      JSON.stringify({ success: false, error: err.message }),
+    return Response.json(
+      { success: false, error: err.message },
       { status: 500 }
     );
   }
@@ -42,13 +35,11 @@ async function deleteDiscount({ request, discountId }) {
   const result = await shopifyGraphQLQuery({
     query: mutation,
     variables: { id: discountId },
-    request
+    request,
   });
 
   const errors = result.data?.discountAutomaticDelete?.userErrors;
-  if (errors?.length) {
-    throw new Error(errors[0].message);
-  }
+  if (errors?.length) throw new Error(errors[0].message);
 }
 
 async function removeFromAppInstallation({ request, discountId }) {
@@ -69,23 +60,20 @@ async function removeFromAppInstallation({ request, discountId }) {
   if (!installation) return;
 
   let discounts = [];
-
   if (installation.metafield?.value) {
     discounts = JSON.parse(installation.metafield.value).discounts || [];
   }
 
   const updated = discounts.filter(d => d.nodeId !== discountId);
 
-  const mutation = `
-    mutation saveAppDiscounts($metafields: [MetafieldsSetInput!]!) {
-      metafieldsSet(metafields: $metafields) {
-        userErrors { message }
-      }
-    }
-  `;
-
   await shopifyGraphQLQuery({
-    query: mutation,
+    query: `
+      mutation saveAppDiscounts($metafields: [MetafieldsSetInput!]!) {
+        metafieldsSet(metafields: $metafields) {
+          userErrors { message }
+        }
+      }
+    `,
     variables: {
       metafields: [
         {
