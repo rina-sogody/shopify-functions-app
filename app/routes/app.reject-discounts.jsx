@@ -32,7 +32,7 @@ export async function loader({ request }) {
   };
 }
 
-const CREATE_PATH = "/api/reject-discounts/create";
+const CREATE_PATH = "/api/discount/create";
 const ACTIVATE_PATH = "/api/discount/activate";
 const DELETE_PATH = "/api/reject-discounts/delete";
 
@@ -69,7 +69,11 @@ export default function RejectDiscountPage() {
       const res = await fetch(CREATE_PATH, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, settings: {} }),
+        body: JSON.stringify({
+          title,
+          type: "reject",
+          settings: {},
+        })
       });
 
       const data = await res.json();

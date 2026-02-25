@@ -32,7 +32,7 @@ export async function loader({ request }) {
   };
 }
 
-const CREATE_PATH = "/api/free-gift-by-variant/create";
+const CREATE_PATH = "/api/discount/create";
 const ACTIVATE_PATH = "/api/discount/activate";
 const DELETE_PATH = "/api/free-gift-by-variant/delete";
 
@@ -98,7 +98,11 @@ export default function FreeGiftVariantPage() {
       const res = await fetch(CREATE_PATH, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, settings }),
+        body: JSON.stringify({
+          title,
+          type: "freeGiftVariant",
+          settings,
+        })
       });
 
       const data = await res.json();

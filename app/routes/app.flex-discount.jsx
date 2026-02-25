@@ -63,7 +63,7 @@ export default function FlexDiscountPage() {
   const toastSuccess = (message) => setToast({ message, tone: "success" });
   const toastError = (message) => setToast({ message, tone: "error" });
 
-  const CREATE_PATH = "/api/flex-discount/create";
+  const CREATE_PATH = "/api/discount/create";
   const ACTIVATE_PATH = "/api/discount/activate";
   const DELETE_PATH = "/api/flex-discount/delete";
 
@@ -122,6 +122,7 @@ export default function FlexDiscountPage() {
         body: JSON.stringify({
           title,
           settings: getSortedSettings(),
+          type: "flex"
         }),
       });
   

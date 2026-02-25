@@ -26,7 +26,7 @@ export async function loader({ request }) {
   };
 }
 
-const CREATE_PATH = "/api/free-gift-discount/create";
+const CREATE_PATH = "/api/discount/create";
 const ACTIVATE_PATH = "/api/discount/activate";
 const DELETE_PATH = "/api/free-gift-discount/delete";
 
@@ -106,6 +106,7 @@ export default function DashboardPage() {
             ),
             FREE_GIFT_SKU: settings.FREE_GIFT_SKU,
           },
+          type: "freeGift"
         }),
       });
 
