@@ -59,7 +59,6 @@ export default function RejectDiscountPage() {
     return true;
   }
 
-
   async function handleCreate() {
     if (!validate()) return;
 
@@ -151,48 +150,44 @@ export default function RejectDiscountPage() {
       <Breadcrumbs />
 
       <s-section>
-        <h2 style={{ fontSize: "17px", marginTop: 0, marginBottom: "14px" }}>
-          Reject Discount
-        </h2>
+        <s-stack gap="200">
+          <div style={{ marginBottom: "10px "}}>
 
-        <div style={{ marginBottom: "1rem" }}>
-          <label>
-            Reject Discount Name:{" "}
-            <input
-              type="text"
-              value={title}
-              disabled={loading}
-              onChange={(e) => setTitle(e.target.value)}
-            />
-          </label>
-        </div>
+          <s-heading variant="headingMd">Reject discount</s-heading>
+          </div>
 
-        <s-paragraph>
-          When active, all codes entered at checkout will be rejected.
-        </s-paragraph>
-
-        <div style={{ marginTop: "1.5rem" }}>
-          <s-button
-            onClick={isEdit ? handleSave : handleCreate}
+          <s-text-field
+            label="Reject discount name"
+            value={title.toString()}
             disabled={loading}
-            type="button"
-          >
-            {loading ? "Processing..." : isEdit ? "Save Changes" : "Create"}
-          </s-button>
-        </div>
+            onInput={(e) => setTitle(e.target.value)}
+          />
 
-        {isEdit && (
-          <div style={{ marginTop: "1rem" }}>
+          <div style={{ margin: "10px 0"}}>
+            <s-text tone="subdued">
+              When active, all codes entered at checkout will be rejected.
+            </s-text>
+          </div>
+
+          <div style={{ marginBottom: "10px"}}>
+            <s-button
+              onClick={isEdit ? handleSave : handleCreate}
+              disabled={loading}
+            >
+              {loading ? "Processing..." : isEdit ? "Save changes" : "Create"}
+            </s-button>
+          </div>
+
+          {isEdit && (
             <s-button
               tone="critical"
               onClick={() => setConfirmOpen(true)}
               disabled={loading}
-              type="button"
             >
               Delete
             </s-button>
-          </div>
-        )}
+          )}
+        </s-stack>
       </s-section>
 
       {confirmOpen && (
