@@ -170,26 +170,15 @@ export default function Index() {
                       <s-paragraph>
                         Type: <strong>{typeLabelMap[discount.type]}</strong>
                       </s-paragraph>
-  
+
+                    <div style={{ display: "flex", flexDirection: "row", gap: "10px"}}>
                       <s-paragraph>
                         Status:{" "}
-                        <span
-                          style={{
-                            display: "inline-block",
-                            padding: "2px 12px",
-                            borderRadius: "999px",
-                            fontSize: "12px",
-                            fontWeight: 600,
-                            backgroundColor:
-                              discount.status === "ACTIVE"
-                                ? "rgba(34,197,94,0.15)"
-                                : "rgba(239,68,68,0.15)",
-                            color: discount.status === "ACTIVE" ? "#16a34a" : "#dc2626",
-                          }}
-                        >
-                          {discount.status === "ACTIVE" ? "Active" : "Inactive"}
-                        </span>
                       </s-paragraph>
+                      <s-badge tone={discount.status === "ACTIVE" ? "success" : "critical"}>
+                          {discount.status === "ACTIVE" ? "Active" : "Inactive"}
+                      </s-badge>
+                    </div>
                     </div>
                   </div>
   
