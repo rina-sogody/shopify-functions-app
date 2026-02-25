@@ -256,12 +256,16 @@ export default function FlexDiscountPage() {
       </s-stack>
         </div>
 
-      <s-text-field
-        label="Discount name"
-        value={title}
-        disabled={loading}
-        onInput={(e) => setTitle(e.target.value)}
-      />
+      <div style={{width: "60%"}}>
+        <s-text-field
+          label="Discount name"
+          value={title}
+          disabled={loading}
+          onInput={(e) => setTitle(e.target.value)}
+        />
+      </div>
+
+      <div style={{width: "60%", marginTop: "10px"}}>
       <s-section heading="Discount tiers">
         <s-stack gap="200">
           {settings.tiers.map((tier, index) => (
@@ -333,6 +337,8 @@ export default function FlexDiscountPage() {
           </s-button>
         </s-stack>
       </s-section>
+      </div>
+      
       <s-section heading="Eligible products (SKUs)">
         {settings.eligibleSkus?.map((sku, index) => (
           <s-inline-stack key={index} gap="200">
@@ -413,7 +419,7 @@ export default function FlexDiscountPage() {
             </s-inline-stack>
           )}
 
-        <div>
+        <div style={{ marginTop: "10px" }}>
           <s-button
             onClick={isEdit ? handleSave : handleCreate}
             disabled={loading}
