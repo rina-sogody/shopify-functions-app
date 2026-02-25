@@ -29,6 +29,9 @@ export default function FlexDiscountPage() {
   const navigate = useNavigate();
   const { status, discountId, mode } = useLoaderData();
   const isEdit = mode === "edit";
+  const hasDiscount = isEdit && Boolean(status);
+  const [isActive, setIsActive] = useState(status?.status === "ACTIVE");
+
 
   const [title, setTitle] = useState(status?.title || "");
   const [loading, setLoading] = useState(false);
@@ -57,10 +60,8 @@ export default function FlexDiscountPage() {
   });
   const [toast, setToast] = useState(null);
   
-  function toastError(message) {
-    setToast({ message, tone: "error" });
-  }
-  
+  const toastSuccess = (message) => setToast({ message, tone: "success" });
+  const toastError = (message) => setToast({ message, tone: "error" });
 
   const CREATE_PATH = "/api/flex-discount/create";
   const ACTIVATE_PATH = "/api/flex-discount/activate";
@@ -173,6 +174,38 @@ export default function FlexDiscountPage() {
     }
   }
 
+  async function handleStatusToggle(newStatus) {
+    if (!discountId) return toastError("Discount ID not found.");
+
+    setLoading(true);
+    try {
+      const res = await fetch(ACTIVATE_PATH, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          discountId,
+          settings,
+          requestedStatus: newStatus,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        setIsActive(newStatus === "ACTIVE");
+        toastSuccess(
+          `Discount ${newStatus.toLowerCase()}d and settings saved!`
+        );
+      } else {
+        toastError("Error: " + JSON.stringify(data.errors || data.error));
+      }
+    } catch (err) {
+      toastError("Local JS Error: " + err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   async function handleDeleteConfirmed() {
     if (!discountId) return;
   
@@ -208,170 +241,179 @@ export default function FlexDiscountPage() {
     >
       <Breadcrumbs/>
       <s-section>
-      <h2 style={{ fontSize: "17px", marginTop: "0", marginBottom: "0"}}>{metadata.name}</h2>
-      <p style={{ fontSize: "15px" }}>{metadata.description}</p>
+        <div style={{marginBottom: "10px"}}>
 
-        <div style={{ marginBottom: "1rem" }}>
-          <label>
-            Discount Name: {" "}
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              disabled={loading}
-            />
-          </label>
+      <s-stack gap="100">
+      <div style={{ display: "flex", flexDirection: "row", gap: "10px", marginBottom: "10px"}}>
+            <s-heading variant="headingMd">{metadata.name}</s-heading>
+            {hasDiscount && (
+              <s-badge tone={isActive ? "success" : "info"}>
+                {isActive ? "Active" : "Inactive"}
+              </s-badge>
+            )}
+          </div>
+        <s-paragraph tone="subdued">{metadata.description}</s-paragraph>
+      </s-stack>
         </div>
 
-        <s-section heading="Discount Tiers">
+      <s-text-field
+        label="Discount name"
+        value={title}
+        disabled={loading}
+        onInput={(e) => setTitle(e.target.value)}
+      />
+      <s-section heading="Discount tiers">
+        <s-stack gap="200">
           {settings.tiers.map((tier, index) => (
             <div
-              key={index}
-              style={{
-                display: "flex",
-                gap: "1rem",
-                marginBottom: "1rem",
-                alignItems: "flex-end",
-                flexWrap: "wrap",
-              }}
-            >
-              <label>
-                Spend (€): {" "}
-                <input
-                  type="number"
-                  min="0"
-                  value={tier.threshold / 100}
-                  disabled={loading}
-                  onChange={(e) => {
-                    const value = parseFloat(e.target.value || 0);
-                    const updated = [...settings.tiers];
-                    updated[index].threshold = Math.round(value * 100);
-                    setSettings({ ...settings, tiers: updated });
-                  }}
-                />
-              </label>
-
-              <label>
-                Discount (%): {" "}
-                <input
-                  type="number"
-                  min="1"
-                  max="100"
-                  value={tier.percent}
-                  disabled={loading}
-                  onChange={(e) => {
-                    const updated = [...settings.tiers];
-                    updated[index].percent =
-                      parseInt(e.target.value || 0, 10);
-                      setSettings({ ...settings, tiers: updated });
-                  }}
-                />
-              </label>
-
-              <label>
-                Message: {" "}
-                <input
-                  type="text"
-                  value={tier.message}
-                  disabled={loading}
-                  onChange={(e) => {
-                    const updated = [...settings.tiers];
-                    updated[index].message = e.target.value;
-                    setSettings({ ...settings, tiers: updated });
-                  }}
-                />
-              </label>
-
-              <s-button
-                tone="critical"
-                disabled={loading}
-                onClick={() => {
-                  const updated = settings.tiers.filter(
-                    (_, i) => i !== index
-                  );
-                  setSettings({ tiers: updated });
-                }}
-                type="button"
-              >
-                Remove
-              </s-button>
-            </div>
-          ))}
-
-          <s-button
-            variant="secondary"
-            disabled={loading}
-            onClick={() => {
-              setSettings({
-                tiers: [
-                  ...settings.tiers,
-                  { threshold: 0, percent: 10, message: "" },
-                ],
-              });
+            key={index}
+            style={{
+              display: "flex",
+              alignItems: "flex-end",
+              gap: "20px",
+              marginBottom: "10px"
             }}
-            type="button"
-          >
-            + Add Tier
-          </s-button>
-        </s-section>
-
-        <s-section heading="Eligible Products (SKUs)">
-
-          {settings.eligibleSkus?.map((sku, index) => (
-            <div
-              key={index}
-              style={{
-                display: "flex",
-                gap: "1rem",
-                marginBottom: "1rem",
-                alignItems: "center",
-              }}
             >
-              <label>
-                SKU: {" "}
-                <input
-                  type="text"
-                  value={sku}
-                  disabled={loading}
-                  onChange={(e) => {
-                    const updated = [...settings.eligibleSkus];
-                    updated[index] = e.target.value;
-                    setSettings({ ...settings, eligibleSkus: updated });
-                  }}
-                />
-              </label>
-
-              <s-button
-                tone="critical"
+            <div style={{ width: 120 }}>
+              <s-text-field
+                label="Spend (€)"
+                type="number"
+                value={(tier.threshold / 100).toString()}
                 disabled={loading}
-                onClick={() => {
-                  const updated = settings.eligibleSkus.filter((_, i) => i !== index);
-                  setSettings({ ...settings, eligibleSkus: updated });
+                onInput={(e) => {
+                  const value = parseFloat(e.target.value || 0);
+                  const updated = [...settings.tiers];
+                  updated[index].threshold = Math.round(value * 100);
+                  setSettings({ ...settings, tiers: updated });
                 }}
-                type="button"
-              >
-                Remove
-              </s-button>
+              />
+            </div>
+
+            <div style={{ width: 120 }}>
+              <s-text-field
+                label="Discount %"
+                type="number"
+                value={tier.percent.toString()}
+                disabled={loading}
+                onInput={(e) => {
+                  const updated = [...settings.tiers];
+                  updated[index].percent = parseInt(e.target.value || 0, 10);
+                  setSettings({ ...settings, tiers: updated });
+                }}
+              />
+            </div>
+
+            <s-button
+              tone="critical"
+              disabled={loading}
+              onClick={() =>
+                setSettings({
+                  ...settings,
+                  tiers: settings.tiers.filter((_, i) => i !== index),
+                })
+              }
+            >
+              Remove
+            </s-button>
             </div>
           ))}
 
           <s-button
             variant="secondary"
             disabled={loading}
-            onClick={() => {
+            onClick={() =>
               setSettings({
                 ...settings,
-                eligibleSkus: [...(settings.eligibleSkus || []), ""],
-              });
-            }}
-            type="button"
+                tiers: [...settings.tiers, { threshold: 0, percent: 10, message: "" }],
+              })
+            }
+            style={{ marginTop: "20px;"}}
           >
-            + Add SKU
+            + Add tier
           </s-button>
+        </s-stack>
+      </s-section>
+      <s-section heading="Eligible products (SKUs)">
+        {settings.eligibleSkus?.map((sku, index) => (
+          <s-inline-stack key={index} gap="200">
+            <div
+            style={{display: "flex",
+              flexDirection: "row",
+              alignItems: "flex-end",
+              gap: "20px",
+              marginBottom: "10px"
+            }}>
 
-        </s-section>
+            <s-text-field
+              value={sku}
+              disabled={loading}
+              onInput={(e) => {
+                const updated = [...settings.eligibleSkus];
+                updated[index] = e.target.value;
+                setSettings({ ...settings, eligibleSkus: updated });
+              }}
+            />
 
-        <div style={{ marginTop: "1.5rem" }}>
+            <s-button
+              tone="critical"
+              disabled={loading}
+              onClick={() =>
+                setSettings({
+                  ...settings,
+                  eligibleSkus: settings.eligibleSkus.filter((_, i) => i !== index),
+                })
+              }
+            >
+              Remove
+            </s-button>
+            </div>
+          </s-inline-stack>
+        ))}
+
+        <s-button
+          variant="secondary"
+          disabled={loading}
+          onClick={() =>
+            setSettings({
+              ...settings,
+              eligibleSkus: [...(settings.eligibleSkus || []), ""],
+            })
+          }
+        >
+          + Add SKU
+        </s-button>
+      </s-section>
+
+        {isEdit && (
+          <s-inline-stack gap="200" wrap>
+            <div style={{ display: "flex", flexDirection: "row", gap: "10px", margin: "10px 0"}}>
+
+              <s-button
+                onClick={() => handleStatusToggle("ACTIVE")}
+                disabled={isActive || loading}
+              >
+                Activate
+              </s-button>
+
+              <s-button
+                onClick={() => handleStatusToggle("DEACTIVE")}
+                disabled={!isActive || loading}
+              >
+                Deactivate
+              </s-button>
+
+              <s-button
+                tone="critical"
+                onClick={() => setConfirmOpen(true)}
+                disabled={loading}
+              >
+                Delete discount
+              </s-button>
+            </div>
+            </s-inline-stack>
+          )}
+
+        <div>
           <s-button
             onClick={isEdit ? handleSave : handleCreate}
             disabled={loading}
@@ -384,19 +426,6 @@ export default function FlexDiscountPage() {
               : "Create Discount"}
           </s-button>
         </div>
-
-        {isEdit && (
-          <div style={{ marginTop: "1rem" }}>
-            <s-button
-              tone="critical"
-              onClick={() => setConfirmOpen(true)}
-              disabled={loading}
-              type="button"
-            >
-              {loading ? "Processing..." : "Delete"}
-            </s-button>
-          </div>
-        )}
       </s-section>
       {confirmOpen && (
         <ConfirmModal
