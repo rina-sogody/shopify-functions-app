@@ -154,7 +154,7 @@ export default function FlexDiscountPage() {
         body: JSON.stringify({
           discountId,
           settings: getSortedSettings(),
-          requestedStatus: status?.status || "ACTIVE",
+          requestedStatus: isActive ? "ACTIVE" : "INACTIVE"
         }),
       });
   
@@ -184,7 +184,7 @@ export default function FlexDiscountPage() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           discountId,
-          settings,
+          settings: getSortedSettings(),
           requestedStatus: newStatus,
         }),
       });
