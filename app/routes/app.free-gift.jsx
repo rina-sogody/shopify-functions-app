@@ -142,7 +142,7 @@ export default function DashboardPage() {
             ),
             FREE_GIFT_SKU: settings.FREE_GIFT_SKU,
           },
-          requestedStatus: isActive ? "ACTIVE" : "DEACTIVE",
+          requestedStatus: isActive ? "Active" : "Inactive",
         }),
       });
 
@@ -230,7 +230,7 @@ export default function DashboardPage() {
           <div style={{ display: "flex", flexDirection: "row", gap: "10px", marginBottom: "10px"}}>
             <s-heading variant="headingMd">{metadata.name}</s-heading>
             {hasDiscount && (
-              <s-badge tone={isActive ? "success" : "critical"}>
+              <s-badge tone={isActive ? "success" : "info"}>
                 {isActive ? "Active" : "Inactive"}
               </s-badge>
             )}

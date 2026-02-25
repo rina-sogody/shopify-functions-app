@@ -7,7 +7,6 @@ import Breadcrumbs from "../components/Breadcrumbs";
 import ConfirmModal from "../components/ConfirmModal";
 import Toast from "../components/Toast";
 
-
 export async function loader({ request }) {
   const url = new URL(request.url);
   const discountId = url.searchParams.get("discountId");
@@ -33,7 +32,6 @@ export async function loader({ request }) {
   };
 }
 
-
 const CREATE_PATH = "/api/free-gift-by-variant/create";
 const ACTIVATE_PATH = "/api/free-gift-by-variant/activate";
 const DELETE_PATH = "/api/free-gift-by-variant/delete";
@@ -41,6 +39,9 @@ const DELETE_PATH = "/api/free-gift-by-variant/delete";
 export default function FreeGiftVariantPage() {
   const navigate = useNavigate();
   const { status, discountId, mode } = useLoaderData() || {};
+  // const isActive = status?.status === "ACTIVE";
+  const [isActive, setIsActive] = useState(status?.status === "ACTIVE");
+
 
   const isEdit = mode === "edit";
 
@@ -149,6 +150,39 @@ export default function FreeGiftVariantPage() {
     }
   }
 
+
+  async function handleStatusToggle(newStatus) {
+    if (!discountId) return toastError("Discount ID not found.");
+
+    setLoading(true);
+    try {
+      const res = await fetch(ACTIVATE_PATH, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          discountId,
+          settings,
+          requestedStatus: newStatus,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        setIsActive(newStatus === "ACTIVE");
+        toastSuccess(
+          `Discount ${newStatus.toLowerCase()}d and settings saved!`
+        );
+      } else {
+        toastError("Error: " + JSON.stringify(data.errors || data.error));
+      }
+    } catch (err) {
+      toastError("Local JS Error: " + err.message);
+    } finally {
+      setLoading(false);
+    }
+  }
+
   async function handleDeleteConfirmed() {
     if (!discountId) return;
 
@@ -181,72 +215,83 @@ export default function FreeGiftVariantPage() {
       <Breadcrumbs />
 
       <s-section>
-        <h2 style={{ fontSize: "17px", marginTop: 0 }}>
-          Free Gift triggered by variant
-        </h2>
+        <s-stack gap="200">
+          <div style={{ marginBottom: "10px", display: "flex", flexDirection: "row", gap: "10px"}}>
+            <s-heading variant="headingMd">
+              Free gift triggered by variant
+            </s-heading>
+            {isEdit && status && (
+              <s-badge tone={isActive ? "success" : "info"}>
+                {isActive ? "Active" : "Inactive"}
+              </s-badge>
+            )}
+          </div>
 
-        <div style={{ marginBottom: "1rem" }}>
-          <label>
-            Discount Name:{" "}
-            <input
-              type="text"
+          <div style={{maxWidth: "60%"}}>
+            <s-text-field
+              label="Discount name:"
               value={title}
               disabled={loading}
-              onChange={(e) => setTitle(e.target.value)}
+              onInput={(e) => setTitle(e.target.value)}
             />
-          </label>
-        </div>
 
-        <div style={{ marginBottom: "1rem" }}>
-          <label>
-            Trigger Variant SKU:{" "}
-            <input
-              type="text"
-              value={settings.triggerSku || ""}
+            <s-text-field
+              label="Trigger variant SKU:"
+              value={(settings.triggerSku || "").toString()}
               disabled={loading}
-              onChange={(e) => updateSetting("triggerSku", e.target.value)}
+              onInput={(e) => updateSetting("triggerSku", e.target.value)}
             />
-          </label>
-        </div>
 
-        <div style={{ marginBottom: "1rem" }}>
-          <label>
-            Gift Variant SKU:{" "}
-            <input
-              type="text"
-              value={settings.giftSku || ""}
+            <s-text-field
+              label="Gift variant SKU:"
+              value={(settings.giftSku || "").toString()}
               disabled={loading}
-              onChange={(e) => updateSetting("giftSku", e.target.value)}
+              onInput={(e) => updateSetting("giftSku", e.target.value)}
             />
-          </label>
-        </div>
+          </div>
 
-        <div style={{ marginTop: "1.5rem" }}>
-          <s-button
-            onClick={isEdit ? handleSave : handleCreate}
-            disabled={loading}
-            type="button"
-          >
-            {loading
-              ? "Processing..."
-              : isEdit
-              ? "Save Changes"
-              : "Create Discount"}
-          </s-button>
-        </div>
+          {isEdit && (
+          <s-inline-stack gap="200" wrap>
+            <div style={{ display: "flex", flexDirection: "row", gap: "10px", margin: "10px 0"}}>
 
-        {isEdit && (
-          <div style={{ marginTop: "1rem" }}>
+              <s-button
+                onClick={() => handleStatusToggle("ACTIVE")}
+                disabled={isActive || loading}
+              >
+                Activate
+              </s-button>
+
+              <s-button
+                onClick={() => handleStatusToggle("DEACTIVE")}
+                disabled={!isActive || loading}
+              >
+                Deactivate
+              </s-button>
+
+              <s-button
+                tone="critical"
+                onClick={() => setConfirmOpen(true)}
+                disabled={loading}
+              >
+                Delete discount
+              </s-button>
+            </div>
+            </s-inline-stack>
+          )}
+
+          <div>  
             <s-button
-              tone="critical"
-              onClick={() => setConfirmOpen(true)}
+              onClick={isEdit ? handleSave : handleCreate}
               disabled={loading}
-              type="button"
             >
-              Delete
+              {loading
+                ? "Processing..."
+                : isEdit
+                ? "Save changes"
+                : "Create discount"}
             </s-button>
           </div>
-        )}
+        </s-stack>
       </s-section>
 
       {confirmOpen && (
