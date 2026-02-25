@@ -175,7 +175,7 @@ export default function Index() {
                       <s-paragraph>
                         Status:{" "}
                       </s-paragraph>
-                      <s-badge tone={discount.status === "ACTIVE" ? "success" : "critical"}>
+                      <s-badge tone={discount.status === "ACTIVE" ? "success" : "info"}>
                           {discount.status === "ACTIVE" ? "Active" : "Inactive"}
                       </s-badge>
                     </div>
