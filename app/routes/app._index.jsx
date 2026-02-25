@@ -94,13 +94,20 @@ export default function Index() {
 
   async function toggleDiscount(discount) {
     const requestedStatus =
-      discount.status === "ACTIVE" ? "DEACTIVE" : "ACTIVE";
+      discount.status === "ACTIVE" ? "INACTIVE" : "ACTIVE";
 
       const endpointMap = {
-      "free-gift": "/api/free-gift-discount/activate",
-      "flex-discount": "/api/flex-discount/activate",
-      "free-gift-by-variant": "/api/free-gift-by-variant/activate",
-      "reject-discounts": "/api/reject-discounts/activate",
+      "free-gift": "/api/discount/activate",
+      "flex-discount": "/api/discount/activate",
+      "free-gift-by-variant": "/api/discount/activate",
+      "reject-discounts": "/api/discount/activate",
+    };
+
+    const typeMap = {
+      "flex-discount": "flex",
+      "free-gift": "freeGift",
+      "free-gift-by-variant": "freeGiftVariant",
+      "reject-discounts": "reject",
     };
 
     try {
@@ -111,6 +118,7 @@ export default function Index() {
             discountId: discount.id,
             requestedStatus,
             settings: {},
+            type: typeMap[discount.type]
           }),
         }
       );

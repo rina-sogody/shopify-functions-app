@@ -27,7 +27,7 @@ export async function loader({ request }) {
 }
 
 const CREATE_PATH = "/api/free-gift-discount/create";
-const ACTIVATE_PATH = "/api/free-gift-discount/activate";
+const ACTIVATE_PATH = "/api/discount/activate";
 const DELETE_PATH = "/api/free-gift-discount/delete";
 
 export default function DashboardPage() {
@@ -142,7 +142,8 @@ export default function DashboardPage() {
             ),
             FREE_GIFT_SKU: settings.FREE_GIFT_SKU,
           },
-          requestedStatus: isActive ? "Active" : "Inactive",
+          requestedStatus: isActive ? "ACTIVE" : "DEACTIVE",
+          type: "freeGift",
         }),
       });
 
@@ -174,6 +175,7 @@ export default function DashboardPage() {
           discountId,
           settings,
           requestedStatus: newStatus,
+          type: "freeGift",
         }),
       });
 

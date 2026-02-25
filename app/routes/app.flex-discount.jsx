@@ -64,7 +64,7 @@ export default function FlexDiscountPage() {
   const toastError = (message) => setToast({ message, tone: "error" });
 
   const CREATE_PATH = "/api/flex-discount/create";
-  const ACTIVATE_PATH = "/api/flex-discount/activate";
+  const ACTIVATE_PATH = "/api/discount/activate";
   const DELETE_PATH = "/api/flex-discount/delete";
 
   function validate() {
@@ -154,7 +154,8 @@ export default function FlexDiscountPage() {
         body: JSON.stringify({
           discountId,
           settings: getSortedSettings(),
-          requestedStatus: isActive ? "ACTIVE" : "INACTIVE"
+          requestedStatus: isActive ? "ACTIVE" : "INACTIVE",
+          type: "flex"
         }),
       });
   
@@ -186,6 +187,8 @@ export default function FlexDiscountPage() {
           discountId,
           settings: getSortedSettings(),
           requestedStatus: newStatus,
+          type: "flex"
+
         }),
       });
 

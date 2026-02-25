@@ -33,13 +33,12 @@ export async function loader({ request }) {
 }
 
 const CREATE_PATH = "/api/free-gift-by-variant/create";
-const ACTIVATE_PATH = "/api/free-gift-by-variant/activate";
+const ACTIVATE_PATH = "/api/discount/activate";
 const DELETE_PATH = "/api/free-gift-by-variant/delete";
 
 export default function FreeGiftVariantPage() {
   const navigate = useNavigate();
   const { status, discountId, mode } = useLoaderData() || {};
-  // const isActive = status?.status === "ACTIVE";
   const [isActive, setIsActive] = useState(status?.status === "ACTIVE");
 
 
@@ -131,6 +130,7 @@ export default function FreeGiftVariantPage() {
           discountId,
           settings,
           requestedStatus: status?.status || "ACTIVE",
+          type: "freeGiftVariant"
         }),
       });
 
@@ -163,6 +163,7 @@ export default function FreeGiftVariantPage() {
           discountId,
           settings,
           requestedStatus: newStatus,
+          type: "freeGiftVariant"
         }),
       });
 

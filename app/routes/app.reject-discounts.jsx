@@ -33,7 +33,7 @@ export async function loader({ request }) {
 }
 
 const CREATE_PATH = "/api/reject-discounts/create";
-const ACTIVATE_PATH = "/api/reject-discounts/activate";
+const ACTIVATE_PATH = "/api/discount/activate";
 const DELETE_PATH = "/api/reject-discounts/delete";
 
 export default function RejectDiscountPage() {
@@ -101,7 +101,8 @@ export default function RejectDiscountPage() {
           discountId,
           settings: {},
           requestedStatus: status?.status || "ACTIVE",
-        }),
+          type: "reject"
+         }),
       });
 
       const data = await res.json();
@@ -131,6 +132,7 @@ export default function RejectDiscountPage() {
         body: JSON.stringify({
           discountId,
           requestedStatus: newStatus,
+          type: "reject"
         }),
       });
 

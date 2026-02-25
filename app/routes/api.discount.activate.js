@@ -1,34 +1,33 @@
 import { shopifyGraphQLQuery } from "../shopify-graphql.js";
+import { discountConfig } from "./api/discountConfig.js";
 
 export async function action({ request }) {
   try {
     const body = await request.json();
-    const { discountId, requestedStatus } = body;
+    const { discountId, settings, requestedStatus, type } = body;
+
+    const config = discountConfig[type];
+    if (!config) throw new Error("Unknown discount type");
 
     const discountInfo = await getDiscountInfoById(discountId, request);
 
-    const functionSettings = {
-      enabled: requestedStatus === "ACTIVE",
-    };
+    const transformedSettings = config.transformSettings(
+      settings,
+      requestedStatus
+    );
 
     const result = await updateDiscountStatus({
       request,
       appId: discountInfo.appId,
       nodeId: discountId,
       status: requestedStatus || "ACTIVE",
-      settings: functionSettings,
+      settings: transformedSettings,
+      namespace: config.namespace,
     });
 
-    return new Response(JSON.stringify(result), {
-      status: 200,
-      headers: { "Content-Type": "application/json" },
-    });
+    return Response.json(result);
   } catch (err) {
-    console.error("Backend Error:", err);
-    return new Response(JSON.stringify({ success: false, error: err.message }), {
-      status: 500,
-      headers: { "Content-Type": "application/json" },
-    });
+    return Response.json({ success: false, error: err.message }, { status: 500 });
   }
 }
 
@@ -36,7 +35,6 @@ async function getDiscountInfoById(nodeId, request) {
   const query = `
     query getDiscountInfo($id: ID!) {
       discountNode(id: $id) {
-        id
         discount {
           __typename
           ... on DiscountAutomaticApp {
@@ -53,16 +51,17 @@ async function getDiscountInfoById(nodeId, request) {
     request,
   });
 
-  const discount = result.data?.discountNode?.discount;
-
-  if (!discount) return { error: "DISCOUNT_NOT_FOUND" };
-  if (discount.__typename !== "DiscountAutomaticApp")
-    return { error: "NOT_APP_DISCOUNT" };
-
-  return { appId: discount.discountId };
+  return { appId: result.data.discountNode.discount.discountId };
 }
 
-async function updateDiscountStatus({ request, appId, nodeId, status, settings }) {
+async function updateDiscountStatus({
+  request,
+  appId,
+  nodeId,
+  status,
+  settings,
+  namespace,
+}) {
   const mutation = `
     mutation updateDiscount($id: ID!, $input: DiscountAutomaticAppInput!, $metafields: [MetafieldsSetInput!]!) {
       discountAutomaticAppUpdate(id: $id, automaticAppDiscount: $input) {
@@ -82,7 +81,7 @@ async function updateDiscountStatus({ request, appId, nodeId, status, settings }
     metafields: [
       {
         ownerId: nodeId,
-        namespace: "reject-discounts",
+        namespace,
         key: "config",
         value: JSON.stringify(settings),
         type: "json",
@@ -97,7 +96,7 @@ async function updateDiscountStatus({ request, appId, nodeId, status, settings }
     ...(result.data?.metafieldsSet?.userErrors || []),
   ];
 
-  if (userErrors.length > 0) return { success: false, errors: userErrors };
+  if (userErrors.length) return { success: false, errors: userErrors };
   if (result.errors) return { success: false, errors: result.errors };
 
   return { success: true };
