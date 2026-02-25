@@ -188,7 +188,6 @@ export default function DashboardPage() {
         toastError("Error: " + JSON.stringify(data.errors || data.error));
       }
     } catch (err) {
-      console.error(err);
       toastError("Local JS Error: " + err.message);
     } finally {
       setLoading(false);
@@ -227,114 +226,100 @@ export default function DashboardPage() {
       <Breadcrumbs />
 
       <s-section>
-        <h2 style={{ fontSize: "17px", marginTop: 0 }}>{metadata.name}</h2>
-        <p style={{ fontSize: "15px" }}>{metadata.description}</p>
+        <s-stack gap="200">
+          <div style={{ display: "flex", flexDirection: "row", gap: "10px", marginBottom: "10px"}}>
+            <s-heading variant="headingMd">{metadata.name}</s-heading>
+            {hasDiscount && (
+              <s-badge tone={isActive ? "success" : "critical"}>
+                {isActive ? "Active" : "Inactive"}
+              </s-badge>
+            )}
+          </div>
+          <s-text tone="subdued">{metadata.description}</s-text>
+          
+          <div style={{ width: "40%", marginTop: "10px"}}>
+            
+          <s-text-field
+            label="Discount name"
+            value={title}
+            disabled={creating}
+            onInput={(e) => setTitle(e.target.value)}
+          />
+          </div>
 
-        <s-section>
-          <label>
-            Discount name:{" "}
-            <input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              disabled={creating}
-            />
-          </label>
-
-          <s-section>
+          <s-stack gap="200">
+          <div
+            style={{
+              display: "flex",
+              gap: 20,
+              alignItems: "flex-end",
+              flexWrap: "wrap",
+              margin: "10px 0"
+            }}
+          >
             {metadata.settings.map((setting) => (
-              <div key={setting.key} style={{ marginBottom: "1rem" }}>
-                <label>
-                  {setting.label}:{" "}
-                  <input
-                    type={setting.type}
-                    value={settings[setting.key]}
-                    onChange={(e) =>
-                      handleSettingChange(
-                        setting.key,
-                        setting.type === "number"
-                          ? parseInt(e.target.value, 10)
-                          : e.target.value
-                      )
-                    }
-                    disabled={loading || creating}
-                  />
-                </label>
+              <div key={setting.key} style={{ minWidth: 220 }}>
+                <s-text-field
+                  label={setting.label}
+                  type={setting.type}
+                  value={(settings[setting.key] ?? "").toString()}
+                  disabled={loading || creating}
+                  onInput={(e) =>
+                    handleSettingChange(
+                      setting.key,
+                      setting.type === "number"
+                        ? parseFloat(e.target.value || 0)
+                        : e.target.value
+                    )
+                  }
+                />
               </div>
             ))}
-          </s-section>
-
-          <div style={{ marginTop: "1rem" }}>
-            <s-button
-              onClick={isEdit ? handleSaveChanges : handleCreateDiscount}
-              disabled={creating}
-              type="button"
-            >
-              {creating
-                ? isEdit
-                  ? "Saving..."
-                  : "Creating..."
-                : isEdit
-                ? "Save changes"
-                : "Create Free Gift Discount"}
-            </s-button>
           </div>
-        </s-section>
-
-        {hasDiscount && (
-          <s-section>
-            <p>
-              Status:{" "}
-              <span
-                style={{
-                  display: "inline-block",
-                  padding: "2px 12px",
-                  borderRadius: "999px",
-                  fontSize: "12px",
-                  fontWeight: 600,
-                  backgroundColor:
-                    isActive === "Active"
-                      ? "rgba(239,68,68,0.15)"
-                      : "rgba(34,197,94,0.15)",
-                  color: isActive === "Active" ? "#dc2626" : "#16a34a",
-                }}
-              >
-                {isActive ? "Active" : "Inactive"}
-              </span>
-            </p>
-          </s-section>
-        )}
+          </s-stack>
 
         {isEdit && (
-          <s-section>
-            <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+          <s-inline-stack gap="200" wrap>
+            <div style={{ display: "flex", flexDirection: "row", gap: "10px", marginBottom: "10px"}}>
+
               <s-button
                 onClick={() => handleStatusToggle("ACTIVE")}
                 disabled={isActive || loading}
-                type="button"
               >
-                {loading ? "Processing..." : "Activate Free Gift Discount"}
+                Activate
               </s-button>
 
               <s-button
                 onClick={() => handleStatusToggle("DEACTIVE")}
                 disabled={!isActive || loading}
-                type="button"
               >
-                {loading ? "Processing..." : "Deactivate Free Gift Discount"}
+                Deactivate
               </s-button>
 
               <s-button
                 tone="critical"
                 onClick={() => setConfirmOpen(true)}
                 disabled={loading}
-                type="button"
               >
-                Delete Discount
+                Delete discount
               </s-button>
             </div>
-          </s-section>
-        )}
+            </s-inline-stack>
+          )}
+        </s-stack>
+
+        <s-button
+            onClick={isEdit ? handleSaveChanges : handleCreateDiscount}
+            disabled={creating}
+          >
+            {creating
+              ? isEdit
+                ? "Saving..."
+                : "Creating..."
+              : isEdit
+              ? "Save changes"
+              : "Create free gift discount"}
+          </s-button>
       </s-section>
 
       {confirmOpen && (
