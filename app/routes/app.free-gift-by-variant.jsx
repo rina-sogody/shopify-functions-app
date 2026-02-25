@@ -279,7 +279,7 @@ export default function FreeGiftVariantPage() {
             </s-inline-stack>
           )}
 
-          <div>  
+          <div style={{marginTop: "10px"}}>  
             <s-button
               onClick={isEdit ? handleSave : handleCreate}
               disabled={loading}

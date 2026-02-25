@@ -392,7 +392,7 @@ export default function FlexDiscountPage() {
 
         {isEdit && (
           <s-inline-stack gap="200" wrap>
-            <div style={{ display: "flex", flexDirection: "row", gap: "10px", margin: "10px 0"}}>
+            <div style={{ display: "flex", flexDirection: "row", gap: "10px", marginTop: "10px", marginBottom: "20px"}}>
 
               <s-button
                 onClick={() => handleStatusToggle("ACTIVE")}
