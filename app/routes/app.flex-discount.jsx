@@ -7,6 +7,7 @@ import { useDiscount } from "./hooks/useDiscount";
 
 import Breadcrumbs from "../components/Breadcrumbs";
 import ConfirmModal from "../components/ConfirmModal";
+import VariantSkuPicker from "../components/VariantSkuPicker"
 
 export const loader = createDiscountLoader("flex");
 
@@ -22,20 +23,28 @@ export default function FlexDiscountPage() {
   const [isActive, setIsActive] = useState(status?.status === "ACTIVE");
   const [title, setTitle] = useState(status?.title || "");
 
-  const [settings, setSettings] = useState(() => {
-    if (status?.metafield?.value) {
-      try {
-        const parsed = JSON.parse(status.metafield.value);
-        return {
-          tiers: parsed.tiers || [],
-          eligibleSkus: parsed.eligibleSkus || [],
-        };
-      } catch {
-        return { tiers: [], eligibleSkus: [] };
-      }
+const [settings, setSettings] = useState(() => {
+  if (status?.hydratedSettings) {
+    return {
+      tiers: status.hydratedSettings.tiers || [],
+      eligibleSkus: status.hydratedSettings.eligibleSkus || [],
+    };
+  }
+
+  if (status?.metafield?.value) {
+    try {
+      const parsed = JSON.parse(status.metafield.value);
+      return {
+        tiers: parsed.tiers || [],
+        eligibleSkus: parsed.eligibleSkus || [],
+      };
+    } catch {
+      return { tiers: [], eligibleSkus: [] };
     }
-    return { tiers: [], eligibleSkus: [] };
-  });
+  }
+
+  return { tiers: [], eligibleSkus: [] };
+});
 
   const {
     loading,
@@ -223,49 +232,23 @@ export default function FlexDiscountPage() {
           </s-section>
         </div>
 
-        <s-section heading="Eligible products (SKUs)">
-          {settings.eligibleSkus?.map((sku, index) => (
-            <s-inline-stack key={index} gap="200">
-              <div style={{ display: "flex", flexDirection: "row", alignItems: "flex-end", gap: "20px", marginBottom: "10px" }}>
-                <s-text-field
-                  value={sku}
-                  disabled={loading}
-                  onInput={(e) => {
-                    const updated = [...settings.eligibleSkus];
-                    updated[index] = e.target.value;
-                    setSettings({ ...settings, eligibleSkus: updated });
-                  }}
-                />
-
-                <s-button
-                  tone="critical"
-                  disabled={loading}
-                  onClick={() =>
-                    setSettings({
-                      ...settings,
-                      eligibleSkus: settings.eligibleSkus.filter((_, i) => i !== index),
-                    })
-                  }
-                >
-                  Remove
-                </s-button>
-              </div>
-            </s-inline-stack>
-          ))}
-
-          <s-button
-            variant="secondary"
+        <div style={{ margin: "20px 0" }}>
+          <VariantSkuPicker
+            label="Eligible variants: "
+            value={settings.eligibleSkus}
+            multiple
             disabled={loading}
-            onClick={() =>
-              setSettings({
-                ...settings,
-                eligibleSkus: [...(settings.eligibleSkus || []), ""],
-              })
+            onChange={(skus) =>
+              setSettings((prev) => ({
+                ...prev,
+                eligibleSkus: skus,
+              }))
             }
-          >
-            + Add SKU
-          </s-button>
-        </s-section>
+            onError={(msg) =>
+              setBanner({ message: msg, tone: "critical" })
+            }
+          />
+        </div>
 
         {isEdit && (
           <s-inline-stack gap="200" wrap>

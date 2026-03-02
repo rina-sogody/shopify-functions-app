@@ -8,6 +8,7 @@ import { useDiscount } from "./hooks/useDiscount";
 
 import Breadcrumbs from "../components/Breadcrumbs";
 import ConfirmModal from "../components/ConfirmModal";
+import VariantSkuPicker from "../components/VariantSkuPicker"
 
 export const loader = createDiscountLoader("freeGift");
 
@@ -160,35 +161,48 @@ export default function DashboardPage() {
               {metadata.settings.map((setting) => (
                 <div key={setting.key} style={{ minWidth: 220 }}>
 
-                  {setting.key === "CART_TOTAL_THRESHOLD" ? (
-                    <s-money-field
-                      label={setting.label}
-                      currency="EUR"
-                      value={settings.CART_TOTAL_THRESHOLD || 0}
-                      disabled={loading}
-                      onInput={(e) =>
-                        handleSettingChange(
-                          "CART_TOTAL_THRESHOLD",
-                          parseFloat(e.target.value || 0)
-                        )
-                      }
-                    />
-                  ) : (
-                    <s-text-field
-                      label={setting.label}
-                      type={setting.type}
-                      value={(settings[setting.key] ?? "").toString()}
-                      disabled={loading}
-                      onInput={(e) =>
-                        handleSettingChange(
-                          setting.key,
-                          setting.type === "number"
-                            ? parseFloat(e.target.value || 0)
-                            : e.target.value
-                        )
-                      }
-                    />
-                  )}
+                {setting.key === "CART_TOTAL_THRESHOLD" ? (
+                  <s-money-field
+                    label={setting.label}
+                    currency="EUR"
+                    value={settings.CART_TOTAL_THRESHOLD || 0}
+                    disabled={loading}
+                    onInput={(e) =>
+                      handleSettingChange(
+                        "CART_TOTAL_THRESHOLD",
+                        parseFloat(e.target.value || 0)
+                      )
+                    }
+                  />
+                ) : setting.key === "FREE_GIFT_SKU" ? (
+                  <VariantSkuPicker
+                    label={setting.label}
+                    value={settings.FREE_GIFT_SKU}
+                    disabled={loading}
+                    onChange={(sku) =>
+                      handleSettingChange("FREE_GIFT_SKU", sku)
+                    }
+                    onError={(msg) =>
+                      setBanner({ message: msg, tone: "critical" })
+                    }
+                  />
+                
+                ) : (
+                  <s-text-field
+                    label={setting.label}
+                    type={setting.type}
+                    value={(settings[setting.key] ?? "").toString()}
+                    disabled={loading}
+                    onInput={(e) =>
+                      handleSettingChange(
+                        setting.key,
+                        setting.type === "number"
+                          ? parseFloat(e.target.value || 0)
+                          : e.target.value
+                      )
+                    }
+                  />
+                )}
 
                 </div>
               ))}

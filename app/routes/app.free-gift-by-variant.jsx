@@ -6,6 +6,7 @@ import { useDiscount } from "./hooks/useDiscount";
 
 import Breadcrumbs from "../components/Breadcrumbs";
 import ConfirmModal from "../components/ConfirmModal";
+import VariantSkuPicker from "../components/VariantSkuPicker";
 
 export const loader = createDiscountLoader("freeGiftVariant");
 
@@ -132,20 +133,31 @@ export default function FreeGiftVariantPage() {
               disabled={loading}
               onInput={(e) => setTitle(e.target.value)}
             />
+            <div style={{ marginTop: "10px" }}>
+              <s-stack gap="200">
 
-            <s-text-field
-              label="Trigger variant SKU:"
-              value={(settings.triggerSku || "").toString()}
-              disabled={loading}
-              onInput={(e) => updateSetting("triggerSku", e.target.value)}
-            />
+                <VariantSkuPicker
+                  label="Trigger variant"
+                  value={settings.triggerSku}
+                  disabled={loading}
+                  onChange={(sku) => updateSetting("triggerSku", sku)}
+                  onError={(msg) =>
+                    setBanner({ message: msg, tone: "critical" })
+                  }
+                />
 
-            <s-text-field
-              label="Gift variant SKU:"
-              value={(settings.giftSku || "").toString()}
-              disabled={loading}
-              onInput={(e) => updateSetting("giftSku", e.target.value)}
-            />
+                <VariantSkuPicker
+                  label="Gift variant"
+                  value={settings.giftSku}
+                  disabled={loading}
+                  onChange={(sku) => updateSetting("giftSku", sku)}
+                  onError={(msg) =>
+                    setBanner({ message: msg, tone: "critical" })
+                  }
+                />
+
+              </s-stack>
+            </div>
           </div>
 
           {isEdit && (
