@@ -8,7 +8,6 @@ import { useDiscount } from "./hooks/useDiscount";
 
 import Breadcrumbs from "../components/Breadcrumbs";
 import ConfirmModal from "../components/ConfirmModal";
-import Toast from "../components/Toast";
 
 export const loader = createDiscountLoader("freeGift");
 
@@ -31,8 +30,8 @@ export default function DashboardPage() {
 
   const {
     loading,
-    toast,
-    setToast,
+    banner,
+    setBanner,
     create,
     save,
     toggleStatus,
@@ -43,16 +42,17 @@ export default function DashboardPage() {
     discountId,
   });
 
-  const toastError = (message) => setToast({ message, tone: "error" });
+  const bannerError = (message) =>
+    setBanner({ message, tone: "critical" });
 
   function validateForm() {
     if (!title?.trim()) {
-      toastError("Discount title is required");
+      bannerError("Discount title is required");
       return false;
     }
 
     if (!settings?.FREE_GIFT_SKU?.trim()) {
-      toastError("Free gift SKU is required");
+      bannerError("Free gift SKU is required");
       return false;
     }
 
@@ -113,6 +113,19 @@ export default function DashboardPage() {
       <Breadcrumbs />
 
       <s-section>
+
+        {banner && (
+          <div style={{ marginBottom: "16px" }}>
+            <s-banner
+              tone={banner.tone}
+              dismissible
+              onDismiss={() => setBanner(null)}
+            >
+              {banner.message}
+            </s-banner>
+          </div>
+        )}
+
         <s-stack gap="200">
           <div style={{ display: "flex", gap: "10px", marginBottom: "10px" }}>
             <s-heading variant="headingMd">{metadata.name}</s-heading>
@@ -194,7 +207,10 @@ export default function DashboardPage() {
           )}
         </s-stack>
 
-        <s-button onClick={isEdit ? handleSave : handleCreate} disabled={loading}>
+        <s-button
+          onClick={isEdit ? handleSave : handleCreate}
+          disabled={loading}
+        >
           {loading
             ? isEdit
               ? "Saving..."
@@ -216,8 +232,6 @@ export default function DashboardPage() {
           onConfirm={remove}
         />
       )}
-
-      <Toast message={toast?.message} tone={toast?.tone} onClose={() => setToast(null)} />
     </s-page>
   );
 }

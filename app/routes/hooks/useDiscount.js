@@ -6,13 +6,18 @@ const DELETE_PATH = "/api/discount/delete";
 
 export function useDiscount({ type, navigate, discountId }) {
   const [loading, setLoading] = useState(false);
-  const [toast, setToast] = useState(null);
+  const [banner, setBanner] = useState(null);
 
-  const toastError = (message) => setToast({ message, tone: "error" });
-  const toastSuccess = (message) => setToast({ message, tone: "success" });
+  const bannerError = (message) =>
+    setBanner({ message, tone: "critical" });
+
+  const bannerSuccess = (message) =>
+    setBanner({ message, tone: "success" });
 
   async function create({ title, settings }) {
     setLoading(true);
+    setBanner(null);
+
     try {
       const res = await fetch(CREATE_PATH, {
         method: "POST",
@@ -21,21 +26,26 @@ export function useDiscount({ type, navigate, discountId }) {
       });
 
       const data = await res.json();
-      if (!data.success) return toastError(data.error || "Error creating");
 
-      toastSuccess("Created!");
+      if (!data.success) {
+        return bannerError(data.error || "Error creating discount");
+      }
+
+      bannerSuccess("Discount created successfully!");
       setTimeout(() => navigate("/app"), 700);
     } catch (e) {
-      toastError(e.message);
+      bannerError(e.message);
     } finally {
       setLoading(false);
     }
   }
 
   async function save({ settings, requestedStatus }) {
-    if (!discountId) return toastError("Missing ID");
+    if (!discountId) return bannerError("Missing discount ID");
 
     setLoading(true);
+    setBanner(null);
+
     try {
       const res = await fetch(ACTIVATE_PATH, {
         method: "POST",
@@ -49,21 +59,26 @@ export function useDiscount({ type, navigate, discountId }) {
       });
 
       const data = await res.json();
-      if (!data.success) return toastError(data.error || "Error saving");
 
-      toastSuccess("Saved!");
+      if (!data.success) {
+        return bannerError(data.error || "Error saving changes");
+      }
+
+      bannerSuccess("Changes saved successfully!");
       setTimeout(() => navigate("/app"), 700);
     } catch (e) {
-      toastError(e.message);
+      bannerError(e.message);
     } finally {
       setLoading(false);
     }
   }
 
   async function toggleStatus({ settings, newStatus }) {
-    if (!discountId) return toastError("Missing ID");
+    if (!discountId) return bannerError("Missing discount ID");
 
     setLoading(true);
+    setBanner(null);
+
     try {
       const res = await fetch(ACTIVATE_PATH, {
         method: "POST",
@@ -77,20 +92,29 @@ export function useDiscount({ type, navigate, discountId }) {
       });
 
       const data = await res.json();
-      if (!data.success) return toastError(data.error);
 
-      toastSuccess("Status updated!");
+      if (!data.success) {
+        return bannerError(data.error || "Error updating status");
+      }
+
+      bannerSuccess(
+        newStatus === "ACTIVE"
+          ? "Discount activated successfully!"
+          : "Discount deactivated successfully!"
+      );
     } catch (e) {
-      toastError(e.message);
+      bannerError(e.message);
     } finally {
       setLoading(false);
     }
   }
 
   async function remove() {
-    if (!discountId) return;
+    if (!discountId) return bannerError("Missing discount ID");
 
     setLoading(true);
+    setBanner(null);
+
     try {
       const res = await fetch(DELETE_PATH, {
         method: "POST",
@@ -99,11 +123,14 @@ export function useDiscount({ type, navigate, discountId }) {
       });
 
       const data = await res.json();
-      if (!data.success) return toastError("Delete error");
+
+      if (!data.success) {
+        return bannerError("Error deleting discount");
+      }
 
       navigate("/app");
     } catch (e) {
-      toastError(e.message);
+      bannerError(e.message);
     } finally {
       setLoading(false);
     }
@@ -111,8 +138,8 @@ export function useDiscount({ type, navigate, discountId }) {
 
   return {
     loading,
-    toast,
-    setToast,
+    banner,
+    setBanner,
     create,
     save,
     toggleStatus,

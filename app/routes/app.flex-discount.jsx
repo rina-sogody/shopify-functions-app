@@ -7,7 +7,6 @@ import { useDiscount } from "./hooks/useDiscount";
 
 import Breadcrumbs from "../components/Breadcrumbs";
 import ConfirmModal from "../components/ConfirmModal";
-import Toast from "../components/Toast";
 
 export const loader = createDiscountLoader("flex");
 
@@ -40,8 +39,8 @@ export default function FlexDiscountPage() {
 
   const {
     loading,
-    toast,
-    setToast,
+    banner,
+    setBanner,
     create,
     save,
     toggleStatus,
@@ -52,32 +51,33 @@ export default function FlexDiscountPage() {
     discountId,
   });
 
-  const toastError = (message) => setToast({ message, tone: "error" });
+  const bannerError = (message) =>
+    setBanner({ message, tone: "critical" });
 
   function validate() {
     if (!title?.trim()) {
-      toastError("Discount name is required");
+      bannerError("Discount name is required");
       return false;
     }
 
     if (!settings?.tiers?.length) {
-      toastError("At least one discount tier is required");
+      bannerError("At least one discount tier is required");
       return false;
     }
 
     for (const tier of settings.tiers) {
       if (tier.threshold === undefined || tier.threshold === null) {
-        toastError("Threshold is required");
+        bannerError("Threshold is required");
         return false;
       }
 
       if (isNaN(tier.threshold) || tier.threshold <= 0) {
-        toastError("Threshold must be greater than 0");
+        bannerError("Threshold must be greater than 0");
         return false;
       }
 
       if (isNaN(tier.percent) || tier.percent <= 0 || tier.percent > 100) {
-        toastError("Discount percent must be between 1 and 100");
+        bannerError("Discount percent must be between 1 and 100");
         return false;
       }
     }
@@ -122,6 +122,19 @@ export default function FlexDiscountPage() {
       <Breadcrumbs />
 
       <s-section>
+
+        {banner && (
+          <div style={{ marginBottom: "16px" }}>
+            <s-banner
+              tone={banner.tone}
+              dismissible
+              onDismiss={() => setBanner(null)}
+            >
+              {banner.message}
+            </s-banner>
+          </div>
+        )}
+
         <div style={{ marginBottom: "10px" }}>
           <s-stack gap="100">
             <div style={{ display: "flex", flexDirection: "row", gap: "10px", marginBottom: "10px" }}>
@@ -290,8 +303,6 @@ export default function FlexDiscountPage() {
           onConfirm={remove}
         />
       )}
-
-      <Toast message={toast?.message} tone={toast?.tone} onClose={() => setToast(null)} />
     </s-page>
   );
 }

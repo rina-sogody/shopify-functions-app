@@ -6,7 +6,6 @@ import { useDiscount } from "./hooks/useDiscount";
 
 import Breadcrumbs from "../components/Breadcrumbs";
 import ConfirmModal from "../components/ConfirmModal";
-import Toast from "../components/Toast";
 
 export const loader = createDiscountLoader("reject");
 
@@ -23,8 +22,8 @@ export default function RejectDiscountPage() {
 
   const {
     loading,
-    toast,
-    setToast,
+    banner,
+    setBanner,
     create,
     save,
     toggleStatus,
@@ -35,11 +34,12 @@ export default function RejectDiscountPage() {
     discountId,
   });
 
-  const toastError = (message) => setToast({ message, tone: "error" });
+  const bannerError = (message) =>
+    setBanner({ message, tone: "critical" });
 
   function validate() {
     if (!title?.trim()) {
-      toastError("Campaign name required");
+      bannerError("Campaign name required");
       return false;
     }
     return true;
@@ -47,8 +47,9 @@ export default function RejectDiscountPage() {
 
   function handleCreate() {
     if (!validate()) return;
-    create({ title, 
-      settings: { message }
+    create({
+      title,
+      settings: { message },
     });
   }
 
@@ -70,7 +71,7 @@ export default function RejectDiscountPage() {
 
   useEffect(() => {
     if (!status?.metafield?.value) return;
-  
+
     try {
       const parsed = JSON.parse(status.metafield.value);
       setMessage(parsed.message || "");
@@ -84,6 +85,19 @@ export default function RejectDiscountPage() {
       <Breadcrumbs />
 
       <s-section>
+
+        {banner && (
+          <div style={{ marginBottom: "16px" }}>
+            <s-banner
+              tone={banner.tone}
+              dismissible
+              onDismiss={() => setBanner(null)}
+            >
+              {banner.message}
+            </s-banner>
+          </div>
+        )}
+
         <s-stack gap="200">
           <div style={{ marginBottom: "10px "}}>
             <div style={{ display: "flex", flexDirection: "row", gap: "10px" }}>
@@ -95,6 +109,7 @@ export default function RejectDiscountPage() {
               )}
             </div>
           </div>
+
           <div style={{ marginBottom: "10px"}}>
             <s-text-field
               label="Reject discount name"
@@ -146,7 +161,10 @@ export default function RejectDiscountPage() {
           )}
 
           <div>
-            <s-button onClick={isEdit ? handleSave : handleCreate} disabled={loading}>
+            <s-button
+              onClick={isEdit ? handleSave : handleCreate}
+              disabled={loading}
+            >
               {loading ? "Processing..." : isEdit ? "Save changes" : "Create"}
             </s-button>
           </div>
@@ -164,8 +182,6 @@ export default function RejectDiscountPage() {
           onConfirm={remove}
         />
       )}
-
-      <Toast message={toast?.message} tone={toast?.tone} onClose={() => setToast(null)} />
     </s-page>
   );
 }

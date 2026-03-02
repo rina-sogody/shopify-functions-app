@@ -6,7 +6,6 @@ import { useDiscount } from "./hooks/useDiscount";
 
 import Breadcrumbs from "../components/Breadcrumbs";
 import ConfirmModal from "../components/ConfirmModal";
-import Toast from "../components/Toast";
 
 export const loader = createDiscountLoader("freeGiftVariant");
 
@@ -19,13 +18,12 @@ export default function FreeGiftVariantPage() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [title, setTitle] = useState(status?.title || "");
   const [isActive, setIsActive] = useState(status?.status === "ACTIVE");
-
   const [settings, setSettings] = useState({});
 
   const {
     loading,
-    toast,
-    setToast,
+    banner,
+    setBanner,
     create,
     save,
     toggleStatus,
@@ -36,24 +34,25 @@ export default function FreeGiftVariantPage() {
     discountId,
   });
 
-  const toastError = (message) => setToast({ message, tone: "error" });
+  const bannerError = (message) =>
+    setBanner({ message, tone: "critical" });
 
   const updateSetting = (key, value) =>
     setSettings((prev) => ({ ...prev, [key]: value }));
 
   function validate() {
     if (!title?.trim()) {
-      toastError("Discount name is required");
+      bannerError("Discount name is required");
       return false;
     }
 
     if (!settings?.triggerSku?.trim()) {
-      toastError("Trigger SKU is required");
+      bannerError("Trigger SKU is required");
       return false;
     }
 
     if (!settings?.giftSku?.trim()) {
-      toastError("Gift SKU is required");
+      bannerError("Gift SKU is required");
       return false;
     }
 
@@ -100,6 +99,19 @@ export default function FreeGiftVariantPage() {
       <Breadcrumbs />
 
       <s-section>
+
+        {banner && (
+          <div style={{ marginBottom: "16px" }}>
+            <s-banner
+              tone={banner.tone}
+              dismissible
+              onDismiss={() => setBanner(null)}
+            >
+              {banner.message}
+            </s-banner>
+          </div>
+        )}
+
         <s-stack gap="200">
           <div style={{ marginBottom: "10px", display: "flex", gap: "10px" }}>
             <s-heading variant="headingMd">
@@ -165,7 +177,10 @@ export default function FreeGiftVariantPage() {
           )}
 
           <div style={{ marginTop: "10px" }}>
-            <s-button onClick={isEdit ? handleSave : handleCreate} disabled={loading}>
+            <s-button
+              onClick={isEdit ? handleSave : handleCreate}
+              disabled={loading}
+            >
               {loading
                 ? "Processing..."
                 : isEdit
@@ -187,8 +202,6 @@ export default function FreeGiftVariantPage() {
           onConfirm={remove}
         />
       )}
-
-      <Toast message={toast?.message} tone={toast?.tone} onClose={() => setToast(null)} />
     </s-page>
   );
 }
