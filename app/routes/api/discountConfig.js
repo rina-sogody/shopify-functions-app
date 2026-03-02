@@ -34,6 +34,8 @@ export const discountConfig = {
     functionHandle: "reject-discounts",
     discountClasses: ["PRODUCT", "ORDER"],
     registrationType: "reject-discounts",
-    transformSettings: () => ({ enabled: false }),
+    transformSettings: (settings) => ({
+      message: settings?.message || "",
+    }),
   },
 };
