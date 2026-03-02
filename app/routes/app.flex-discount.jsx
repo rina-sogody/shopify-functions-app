@@ -164,18 +164,18 @@ export default function FlexDiscountPage() {
               {settings.tiers.map((tier, index) => (
                 <div key={index} style={{ display: "flex", alignItems: "flex-end", gap: "20px", marginBottom: "10px" }}>
                   <div style={{ width: 120 }}>
-                    <s-text-field
-                      label="Spend (€)"
-                      type="number"
-                      value={(tier.threshold / 100).toString()}
-                      disabled={loading}
-                      onInput={(e) => {
-                        const value = parseFloat(e.target.value || 0);
-                        const updated = [...settings.tiers];
-                        updated[index].threshold = Math.round(value * 100);
-                        setSettings({ ...settings, tiers: updated });
-                      }}
-                    />
+                  <s-money-field
+                    label="Spend"
+                    currency="EUR"
+                    value={(tier.threshold / 100) || 0}
+                    disabled={loading}
+                    onInput={(e) => {
+                      const value = parseFloat(e.target.value || 0);
+                      const updated = [...settings.tiers];
+                      updated[index].threshold = Math.round(value * 100);
+                      setSettings({ ...settings, tiers: updated });
+                    }}
+                  />
                   </div>
 
                   <div style={{ width: 120 }}>
