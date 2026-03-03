@@ -22,11 +22,10 @@ export default function DashboardPage() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [title, setTitle] = useState(status?.title || "");
   const [isActive, setIsActive] = useState(status?.status === "ACTIVE");
-
-  const [settings, setSettings] = useState(() => {
-    const initial = {};
-    metadata.settings.forEach((s) => (initial[s.key] = s.default));
-    return initial;
+  const [settings, setSettings] = useState({
+    CART_TOTAL_THRESHOLD:
+      metadata.settings.find((s) => s.key === "CART_TOTAL_THRESHOLD")?.default ?? 0,
+    FREE_GIFT_SKU: null,
   });
 
   const {
@@ -65,17 +64,28 @@ export default function DashboardPage() {
 
   useEffect(() => {
     if (!status?.metafield?.value) return;
-
+  
     try {
       const parsed = JSON.parse(status.metafield.value);
-
-      setSettings({
-        CART_TOTAL_THRESHOLD: parsed.threshold
-          ? parsed.threshold / 100
-          : metadata.settings.find((s) => s.key === "CART_TOTAL_THRESHOLD")
-              ?.default,
-        FREE_GIFT_SKU: parsed.sku || "",
-      });
+  
+      let normalizedSku = null;
+  
+      if (parsed.sku) {
+        if (typeof parsed.sku === "string") {
+          normalizedSku = { sku: parsed.sku };
+        } else if (typeof parsed.sku === "object") {
+          normalizedSku = parsed.sku;
+        }
+      }
+  
+      setSettings((prev) => ({
+        ...prev,
+        CART_TOTAL_THRESHOLD:
+          parsed.threshold !== undefined && parsed.threshold !== null
+            ? parsed.threshold / 100
+            : prev.CART_TOTAL_THRESHOLD,
+        FREE_GIFT_SKU: normalizedSku,
+      }));
     } catch (e) {
       console.error("Metafield parse error", e);
     }
@@ -84,7 +94,7 @@ export default function DashboardPage() {
   function getFormattedSettings() {
     return {
       CART_TOTAL_THRESHOLD: Math.round(settings.CART_TOTAL_THRESHOLD * 100),
-      FREE_GIFT_SKU: settings.FREE_GIFT_SKU,
+      FREE_GIFT_SKU: settings.FREE_GIFT_SKU?.sku,
     };
   }
 

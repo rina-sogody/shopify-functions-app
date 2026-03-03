@@ -19,7 +19,10 @@ export default function FreeGiftVariantPage() {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [title, setTitle] = useState(status?.title || "");
   const [isActive, setIsActive] = useState(status?.status === "ACTIVE");
-  const [settings, setSettings] = useState({});
+  const [settings, setSettings] = useState({
+    triggerSku: null,
+    giftSku: null,
+  });
 
   const {
     loading,
@@ -65,31 +68,71 @@ export default function FreeGiftVariantPage() {
 
     try {
       const parsed = JSON.parse(status.metafield.value);
+
+      const normalizeSku = (value) => {
+        if (!value) return null;
+
+        if (typeof value === "string") {
+          return {
+            sku: value,
+            variantId: null,
+            productId: null,
+            title: "",
+            productTitle: "",
+            image: null,
+          };
+        }
+        
+        if (typeof value === "object") {
+          return {
+            sku: value.sku ?? null,
+            variantId: value.variantId ?? null,
+            productId: value.productId ?? null,
+            title: value.title ?? "",
+            productTitle: value.productTitle ?? "",
+            image: value.image ?? null,
+          };
+        }
+
+        return null;
+      };
+
       setSettings({
-        triggerSku: parsed.triggerSku ?? "",
-        giftSku: parsed.giftSku ?? "",
+        triggerSku: normalizeSku(parsed.triggerSku),
+        giftSku: normalizeSku(parsed.giftSku),
       });
+
+      setTitle(status?.title || "");
+      setIsActive(status?.status === "ACTIVE");
+
     } catch (e) {
       console.error("Metafield parse error", e);
     }
   }, [status]);
 
+  function getFormattedSettings() {
+    return {
+      triggerSku: settings.triggerSku || null,
+      giftSku: settings.giftSku || null,
+    };
+  }
+
   function handleCreate() {
     if (!validate()) return;
-    create({ title, settings });
+    create({ title, settings: getFormattedSettings() });
   }
 
   function handleSave() {
     if (!validate()) return;
     save({
-      settings,
+      settings: getFormattedSettings(),
       requestedStatus: isActive ? "ACTIVE" : "INACTIVE",
     });
   }
 
   function handleToggle(newStatus) {
     toggleStatus({
-      settings,
+      settings: getFormattedSettings(),
       newStatus,
     });
     setIsActive(newStatus === "ACTIVE");
@@ -135,7 +178,7 @@ export default function FreeGiftVariantPage() {
             />
             <div style={{ marginTop: "10px" }}>
               <s-stack gap="200">
-                <div style={{display: "flex", flexDirection: "column", gap: "10px"}}>
+                <div style={{ display: "flex", flexDirection: "column", gap: "10px"}}>
 
                 <VariantSkuPicker
                   label="Trigger variant: "
