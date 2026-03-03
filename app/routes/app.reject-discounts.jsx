@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 import { useState, useEffect } from "react";
 import { useLoaderData, useNavigate } from "react-router";
 
@@ -5,18 +6,16 @@ import { createDiscountLoader } from "./loaders/createDiscountLoader";
 import { useDiscount } from "./hooks/useDiscount";
 
 import Breadcrumbs from "../components/Breadcrumbs";
-import ConfirmModal from "../components/ConfirmModal";
 
 export const loader = createDiscountLoader("reject");
 
 export default function RejectDiscountPage() {
   const navigate = useNavigate();
   const { status, discountId, mode } = useLoaderData();
-  const [message, setMessage] = useState("");
 
   const isEdit = mode === "edit";
 
-  const [confirmOpen, setConfirmOpen] = useState(false);
+  const [message, setMessage] = useState("");
   const [title, setTitle] = useState(status?.title || "");
   const [isActive, setIsActive] = useState(status?.status === "ACTIVE");
 
@@ -69,6 +68,10 @@ export default function RejectDiscountPage() {
     setIsActive(newStatus === "ACTIVE");
   }
 
+  function handleDelete() {
+    remove();
+  }
+
   useEffect(() => {
     if (!status?.metafield?.value) return;
 
@@ -82,6 +85,33 @@ export default function RejectDiscountPage() {
 
   return (
     <s-page backAction={{ content: "Discounts", url: "/app" }}>
+      <s-modal
+        id="delete-reject-discount-modal"
+        heading="Are you sure you want to delete this discount?"
+      >
+        <s-text>This action cannot be undone.</s-text>
+
+        <s-button
+          slot="primary-action"
+          variant="primary"
+          tone="critical"
+          loading={loading}
+          onClick={handleDelete}
+          commandFor="delete-reject-discount-modal"
+          command="--hide"
+        >
+          Yes
+        </s-button>
+
+        <s-button
+          slot="secondary-actions"
+          commandFor="delete-reject-discount-modal"
+          command="--hide"
+        >
+          No
+        </s-button>
+      </s-modal>
+
       <Breadcrumbs />
 
       <s-section>
@@ -151,7 +181,8 @@ export default function RejectDiscountPage() {
 
                 <s-button
                   tone="critical"
-                  onClick={() => setConfirmOpen(true)}
+                  commandFor="delete-reject-discount-modal"
+                  command="--show"
                   disabled={loading}
                 >
                   Delete discount
@@ -170,18 +201,6 @@ export default function RejectDiscountPage() {
           </div>
         </s-stack>
       </s-section>
-
-      {confirmOpen && (
-        <ConfirmModal
-          open={confirmOpen}
-          title="Are you sure you want to delete this discount?"
-          confirmLabel="Yes"
-          cancelLabel="No"
-          loading={loading}
-          onCancel={() => setConfirmOpen(false)}
-          onConfirm={remove}
-        />
-      )}
     </s-page>
   );
 }

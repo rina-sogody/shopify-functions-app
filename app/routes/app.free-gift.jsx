@@ -7,8 +7,7 @@ import { createDiscountLoader } from "./loaders/createDiscountLoader";
 import { useDiscount } from "./hooks/useDiscount";
 
 import Breadcrumbs from "../components/Breadcrumbs";
-import ConfirmModal from "../components/ConfirmModal";
-import VariantSkuPicker from "../components/VariantSkuPicker"
+import VariantSkuPicker from "../components/VariantSkuPicker";
 
 export const loader = createDiscountLoader("freeGift");
 
@@ -19,7 +18,6 @@ export default function DashboardPage() {
   const isEdit = mode === "edit";
   const hasDiscount = isEdit && Boolean(status);
 
-  const [confirmOpen, setConfirmOpen] = useState(false);
   const [title, setTitle] = useState(status?.title || "");
   const [isActive, setIsActive] = useState(status?.status === "ACTIVE");
   const [settings, setSettings] = useState({
@@ -119,8 +117,37 @@ export default function DashboardPage() {
     setIsActive(newStatus === "ACTIVE");
   }
 
+  function handleDelete() {
+    remove();
+  }
+
   return (
     <s-page backAction={{ content: "Discounts", url: "/app" }}>
+
+      <s-modal id="delete-discount-modal" heading="Are you sure you want to delete this discount?">
+        <s-text>This action cannot be undone.</s-text>
+
+        <s-button
+          slot="primary-action"
+          variant="primary"
+          tone="critical"
+          loading={loading}
+          onClick={handleDelete}
+          commandFor="delete-discount-modal"
+          command="--hide"
+        >
+          Yes
+        </s-button>
+
+        <s-button
+          slot="secondary-actions"
+          commandFor="delete-discount-modal"
+          command="--hide"
+        >
+          No
+        </s-button>
+      </s-modal>
+
       <Breadcrumbs />
 
       <s-section>
@@ -239,7 +266,8 @@ export default function DashboardPage() {
 
                 <s-button
                   tone="critical"
-                  onClick={() => setConfirmOpen(true)}
+                  commandFor="delete-discount-modal"
+                  command="--show"
                   disabled={loading}
                 >
                   Delete discount
@@ -262,18 +290,6 @@ export default function DashboardPage() {
             : "Create free gift discount"}
         </s-button>
       </s-section>
-
-      {confirmOpen && (
-        <ConfirmModal
-          open={confirmOpen}
-          title="Are you sure you want to delete this discount?"
-          confirmLabel="Yes"
-          cancelLabel="No"
-          loading={loading}
-          onCancel={() => setConfirmOpen(false)}
-          onConfirm={remove}
-        />
-      )}
     </s-page>
   );
 }
