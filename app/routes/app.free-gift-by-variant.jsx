@@ -46,17 +46,17 @@ export default function FreeGiftVariantPage() {
       bannerError("Discount name is required");
       return false;
     }
-
-    if (!settings?.triggerSku?.trim()) {
-      bannerError("Trigger SKU is required");
+  
+    if (!settings?.triggerSku?.sku) {
+      bannerError("Trigger variant is required");
       return false;
     }
-
-    if (!settings?.giftSku?.trim()) {
-      bannerError("Gift SKU is required");
+  
+    if (!settings?.giftSku?.sku) {
+      bannerError("Gift variant is required");
       return false;
     }
-
+  
     return true;
   }
 
@@ -135,9 +135,10 @@ export default function FreeGiftVariantPage() {
             />
             <div style={{ marginTop: "10px" }}>
               <s-stack gap="200">
+                <div style={{display: "flex", flexDirection: "column", gap: "10px"}}>
 
                 <VariantSkuPicker
-                  label="Trigger variant"
+                  label="Trigger variant: "
                   value={settings.triggerSku}
                   disabled={loading}
                   onChange={(sku) => updateSetting("triggerSku", sku)}
@@ -147,7 +148,7 @@ export default function FreeGiftVariantPage() {
                 />
 
                 <VariantSkuPicker
-                  label="Gift variant"
+                  label="Gift variant: "
                   value={settings.giftSku}
                   disabled={loading}
                   onChange={(sku) => updateSetting("giftSku", sku)}
@@ -155,6 +156,7 @@ export default function FreeGiftVariantPage() {
                     setBanner({ message: msg, tone: "critical" })
                   }
                 />
+                </div>
 
               </s-stack>
             </div>

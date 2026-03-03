@@ -52,7 +52,7 @@ export default function DashboardPage() {
       return false;
     }
 
-    if (!settings?.FREE_GIFT_SKU?.trim()) {
+    if (!settings?.FREE_GIFT_SKU?.sku) {
       bannerError("Free gift SKU is required");
       return false;
     }
