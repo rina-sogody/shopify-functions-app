@@ -13,18 +13,34 @@
 export function cartLinesDiscountsGenerateRun(input) {
   const codes = input.enteredDiscountCodes || [];
 
-  // Nothing to reject
   if (!codes.length) {
     return { operations: [] };
   }
 
-  // Only reject rejectable codes (Shopify rule)
   const rejectable = codes.filter(c => c.rejectable);
 
   if (!rejectable.length) {
     return { operations: [] };
   }
 
+    let message = "test default";
+
+    const metafieldValue = input.discount?.metafield?.value;
+  
+    if (metafieldValue) {
+      try {
+        const parsed = JSON.parse(metafieldValue);
+  
+        if (parsed?.message && typeof parsed.message === "string") {
+          const trimmed = parsed.message.trim();
+          if (trimmed.length > 0) {
+            message = trimmed;
+          }
+        }
+      } catch {
+        // Ignore invalid JSON and keep default message
+      }
+    }
   return {
     operations: [
       {
@@ -32,7 +48,7 @@ export function cartLinesDiscountsGenerateRun(input) {
           codes: rejectable.map(c => ({
             code: c.code,
           })),
-          message: "Discount codes are disabled during this campaign",
+          message,
         },
       },
     ],

@@ -39,7 +39,7 @@ export function cartLinesDiscountsGenerateRun(input) {
         productDiscountsAdd: {
           candidates: [
             {
-              message: "Free gift applied!",
+              message: "Free gift!",
               targets: [{ cartLine: { id: giftLine.id } }],
               value: { percentage: { value: 100 } },
             },

@@ -1,198 +1,174 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useLoaderData, useNavigate } from "react-router";
 
-import { getDiscountStatus } from "./api/getDiscountStatus";
+import { createDiscountLoader } from "./loaders/createDiscountLoader";
+import { useDiscount } from "./hooks/useDiscount";
 
 import Breadcrumbs from "../components/Breadcrumbs";
 import ConfirmModal from "../components/ConfirmModal";
-import Toast from "../components/Toast";
 
-export async function loader({ request }) {
-  const url = new URL(request.url);
-  const discountId = url.searchParams.get("discountId");
-
-  let status = null;
-
-  if (discountId) {
-    try {
-      status = await getDiscountStatus({
-        request,
-        discountId,
-        type: "reject",
-      });
-    } catch (err) {
-      console.error("Loader error:", err);
-    }
-  }
-
-  return {
-    status,
-    discountId,
-    mode: discountId ? "edit" : "create",
-  };
-}
-
-const CREATE_PATH = "/api/reject-discounts/create";
-const ACTIVATE_PATH = "/api/reject-discounts/activate";
-const DELETE_PATH = "/api/reject-discounts/delete";
+export const loader = createDiscountLoader("reject");
 
 export default function RejectDiscountPage() {
   const navigate = useNavigate();
   const { status, discountId, mode } = useLoaderData();
+  const [message, setMessage] = useState("");
 
   const isEdit = mode === "edit";
 
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [toast, setToast] = useState(null);
-
   const [title, setTitle] = useState(status?.title || "");
+  const [isActive, setIsActive] = useState(status?.status === "ACTIVE");
 
-  const toastError = (message) => setToast({ message, tone: "error" });
-  const toastSuccess = (message) => setToast({ message, tone: "success" });
+  const {
+    loading,
+    banner,
+    setBanner,
+    create,
+    save,
+    toggleStatus,
+    remove,
+  } = useDiscount({
+    type: "reject",
+    navigate,
+    discountId,
+  });
+
+  const bannerError = (message) =>
+    setBanner({ message, tone: "critical" });
 
   function validate() {
     if (!title?.trim()) {
-      toastError("Campaign name required");
+      bannerError("Campaign name required");
       return false;
     }
     return true;
   }
 
-
-  async function handleCreate() {
+  function handleCreate() {
     if (!validate()) return;
-
-    setLoading(true);
-    try {
-      const res = await fetch(CREATE_PATH, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ title, settings: {} }),
-      });
-
-      const data = await res.json();
-
-      if (!data.success) {
-        toastError(data.error || "Error creating campaign");
-        return;
-      }
-
-      toastSuccess("Campaign created successfully!");
-      setTimeout(() => navigate("/app"), 700);
-    } catch (err) {
-      toastError(err.message);
-    } finally {
-      setLoading(false);
-    }
+    create({
+      title,
+      settings: { message },
+    });
   }
 
-  async function handleSave() {
-    if (!discountId) return toastError("Discount ID missing");
+  function handleSave() {
     if (!validate()) return;
-
-    setLoading(true);
-    try {
-      const res = await fetch(ACTIVATE_PATH, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          discountId,
-          settings: {},
-          requestedStatus: status?.status || "ACTIVE",
-        }),
-      });
-
-      const data = await res.json();
-
-      if (!data.success) {
-        toastError("Error deleting discount");
-        return;
-      }
-
-      toastSuccess("Campaign deleted");
-      setTimeout(() => navigate("/app"), 700);
-    } catch (err) {
-      toastError(err.message);
-    } finally {
-      setLoading(false);
-    }
+    save({
+      settings: { message },
+      requestedStatus: isActive ? "ACTIVE" : "INACTIVE",
+    });
   }
 
-  async function handleDeleteConfirmed() {
-    if (!discountId) return;
-
-    setLoading(true);
-    try {
-      const res = await fetch(DELETE_PATH, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ discountId }),
-      });
-
-      const data = await res.json();
-
-      if (!data.success) {
-        toastError("Error deleting discount");
-        return;
-      }
-
-      navigate("/app");
-    } catch (err) {
-      toastError(err.message);
-    } finally {
-      setLoading(false);
-      setConfirmOpen(false);
-    }
+  function handleToggle(newStatus) {
+    toggleStatus({
+      settings: { message },
+      newStatus,
+    });
+    setIsActive(newStatus === "ACTIVE");
   }
+
+  useEffect(() => {
+    if (!status?.metafield?.value) return;
+
+    try {
+      const parsed = JSON.parse(status.metafield.value);
+      setMessage(parsed.message || "");
+    } catch (e) {
+      console.error("Metafield parse error", e);
+    }
+  }, [status]);
 
   return (
     <s-page backAction={{ content: "Discounts", url: "/app" }}>
       <Breadcrumbs />
 
       <s-section>
-        <h2 style={{ fontSize: "17px", marginTop: 0, marginBottom: "14px" }}>
-          Reject Discount
-        </h2>
 
-        <div style={{ marginBottom: "1rem" }}>
-          <label>
-            Reject Discount Name:{" "}
-            <input
-              type="text"
-              value={title}
-              disabled={loading}
-              onChange={(e) => setTitle(e.target.value)}
-            />
-          </label>
-        </div>
-
-        <s-paragraph>
-          When active, all codes entered at checkout will be rejected.
-        </s-paragraph>
-
-        <div style={{ marginTop: "1.5rem" }}>
-          <s-button
-            onClick={isEdit ? handleSave : handleCreate}
-            disabled={loading}
-            type="button"
-          >
-            {loading ? "Processing..." : isEdit ? "Save Changes" : "Create"}
-          </s-button>
-        </div>
-
-        {isEdit && (
-          <div style={{ marginTop: "1rem" }}>
-            <s-button
-              tone="critical"
-              onClick={() => setConfirmOpen(true)}
-              disabled={loading}
-              type="button"
+        {banner && (
+          <div style={{ marginBottom: "16px" }}>
+            <s-banner
+              tone={banner.tone}
+              dismissible
+              onDismiss={() => setBanner(null)}
             >
-              Delete
-            </s-button>
+              {banner.message}
+            </s-banner>
           </div>
         )}
+
+        <s-stack gap="200">
+          <div style={{ marginBottom: "10px "}}>
+            <div style={{ display: "flex", flexDirection: "row", gap: "10px" }}>
+              <s-heading variant="headingMd">Reject Discount</s-heading>
+              {isEdit && (
+                <s-badge tone={isActive ? "success" : "info"}>
+                  {isActive ? "Active" : "Inactive"}
+                </s-badge>
+              )}
+            </div>
+          </div>
+
+          <div style={{ marginBottom: "10px"}}>
+            <s-text-field
+              label="Reject discount name"
+              value={title.toString()}
+              disabled={loading}
+              onInput={(e) => setTitle(e.target.value)}
+            />
+          </div>
+
+          <s-text-field
+            label="Rejection message shown to customers"
+            value={message}
+            disabled={loading}
+            onInput={(e) => setMessage(e.target.value)}
+          />
+
+          <div style={{ margin: "10px 0" }}>
+            <s-text tone="subdued">
+              When active, all codes entered at checkout will be rejected.
+            </s-text>
+          </div>
+
+          {isEdit && (
+            <s-inline-stack gap="200" wrap>
+              <div style={{ display: "flex", gap: "10px", marginBottom: "10px" }}>
+                <s-button
+                  onClick={() => handleToggle("ACTIVE")}
+                  disabled={isActive || loading}
+                >
+                  Activate
+                </s-button>
+
+                <s-button
+                  onClick={() => handleToggle("DEACTIVE")}
+                  disabled={!isActive || loading}
+                >
+                  Deactivate
+                </s-button>
+
+                <s-button
+                  tone="critical"
+                  onClick={() => setConfirmOpen(true)}
+                  disabled={loading}
+                >
+                  Delete discount
+                </s-button>
+              </div>
+            </s-inline-stack>
+          )}
+
+          <div>
+            <s-button
+              onClick={isEdit ? handleSave : handleCreate}
+              disabled={loading}
+            >
+              {loading ? "Processing..." : isEdit ? "Save changes" : "Create"}
+            </s-button>
+          </div>
+        </s-stack>
       </s-section>
 
       {confirmOpen && (
@@ -203,15 +179,9 @@ export default function RejectDiscountPage() {
           cancelLabel="No"
           loading={loading}
           onCancel={() => setConfirmOpen(false)}
-          onConfirm={handleDeleteConfirmed}
+          onConfirm={remove}
         />
       )}
-
-      <Toast
-        message={toast?.message}
-        tone={toast?.tone}
-        onClose={() => setToast(null)}
-      />
     </s-page>
   );
 }

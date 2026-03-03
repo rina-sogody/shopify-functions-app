@@ -46,13 +46,13 @@ export default function ConfirmModal({
         <p>{message}</p>
 
         <div style={{ display: "flex", gap: 10, marginTop: 20 }}>
+          <s-button tone="critical" onClick={onConfirm} loading={loading}>
+            {confirmLabel}
+          </s-button>
           <s-button onClick={onCancel} disabled={loading}>
             {cancelLabel}
           </s-button>
 
-          <s-button tone="critical" onClick={onConfirm} loading={loading}>
-            {confirmLabel}
-          </s-button>
         </div>
       </div>
     </div>

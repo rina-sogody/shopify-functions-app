@@ -3,4 +3,10 @@ query RunInput {
     code
     rejectable
   }
+  discount {
+    discountClasses
+    metafield(namespace: "reject-discounts", key: "config") {
+      value
+    }
+  }
 }

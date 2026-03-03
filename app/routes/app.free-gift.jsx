@@ -2,33 +2,15 @@
 import { useState, useEffect } from "react";
 import { useLoaderData, useNavigate } from "react-router";
 
-import { getDiscountStatus } from "./api/getDiscountStatus";
 import { metadata } from "../extensions/free-gift";
+import { createDiscountLoader } from "./loaders/createDiscountLoader";
+import { useDiscount } from "./hooks/useDiscount";
 
 import Breadcrumbs from "../components/Breadcrumbs";
 import ConfirmModal from "../components/ConfirmModal";
-import Toast from "../components/Toast";
+import VariantSkuPicker from "../components/VariantSkuPicker"
 
-export async function loader({ request }) {
-  const url = new URL(request.url);
-  const discountId = url.searchParams.get("discountId");
-
-  const status = await getDiscountStatus({
-    request,
-    discountId,
-    type: "freeGift",
-  });
-
-  return {
-    status,
-    discountId,
-    mode: discountId ? "edit" : "create",
-  };
-}
-
-const CREATE_PATH = "/api/free-gift-discount/create";
-const ACTIVATE_PATH = "/api/free-gift-discount/activate";
-const DELETE_PATH = "/api/free-gift-discount/delete";
+export const loader = createDiscountLoader("freeGift");
 
 export default function DashboardPage() {
   const navigate = useNavigate();
@@ -38,12 +20,7 @@ export default function DashboardPage() {
   const hasDiscount = isEdit && Boolean(status);
 
   const [confirmOpen, setConfirmOpen] = useState(false);
-  const [toast, setToast] = useState(null);
-
   const [title, setTitle] = useState(status?.title || "");
-  const [creating, setCreating] = useState(false);
-  const [loading, setLoading] = useState(false);
-
   const [isActive, setIsActive] = useState(status?.status === "ACTIVE");
 
   const [settings, setSettings] = useState(() => {
@@ -52,17 +29,31 @@ export default function DashboardPage() {
     return initial;
   });
 
-  const toastSuccess = (message) => setToast({ message, tone: "success" });
-  const toastError = (message) => setToast({ message, tone: "error" });
+  const {
+    loading,
+    banner,
+    setBanner,
+    create,
+    save,
+    toggleStatus,
+    remove,
+  } = useDiscount({
+    type: "freeGift",
+    navigate,
+    discountId,
+  });
+
+  const bannerError = (message) =>
+    setBanner({ message, tone: "critical" });
 
   function validateForm() {
     if (!title?.trim()) {
-      toastError("Discount title is required");
+      bannerError("Discount title is required");
       return false;
     }
 
-    if (!settings?.FREE_GIFT_SKU?.trim()) {
-      toastError("Free gift SKU is required");
+    if (!settings?.FREE_GIFT_SKU?.sku) {
+      bannerError("Free gift SKU is required");
       return false;
     }
 
@@ -90,136 +81,32 @@ export default function DashboardPage() {
     }
   }, [status]);
 
-  async function handleCreateDiscount() {
+  function getFormattedSettings() {
+    return {
+      CART_TOTAL_THRESHOLD: Math.round(settings.CART_TOTAL_THRESHOLD * 100),
+      FREE_GIFT_SKU: settings.FREE_GIFT_SKU,
+    };
+  }
+
+  function handleCreate() {
     if (!validateForm()) return;
-
-    setCreating(true);
-    try {
-      const res = await fetch(CREATE_PATH, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          title,
-          settings: {
-            CART_TOTAL_THRESHOLD: Math.round(
-              settings.CART_TOTAL_THRESHOLD * 100
-            ),
-            FREE_GIFT_SKU: settings.FREE_GIFT_SKU,
-          },
-        }),
-      });
-
-      const data = await res.json();
-
-      if (!data.success) {
-        toastError(data.error || "Error creating discount");
-        return;
-      }
-
-      toastSuccess("Discount created successfully!");
-      setTimeout(() => navigate("/app"), 700);
-    } catch (err) {
-      toastError(err.message);
-    } finally {
-      setCreating(false);
-    }
+    create({ title, settings: getFormattedSettings() });
   }
 
-  async function handleSaveChanges() {
-    if (!discountId) return toastError("Discount ID missing");
+  function handleSave() {
     if (!validateForm()) return;
-
-    setLoading(true);
-    try {
-      const res = await fetch(ACTIVATE_PATH, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          discountId,
-          settings: {
-            CART_TOTAL_THRESHOLD: Math.round(
-              settings.CART_TOTAL_THRESHOLD * 100
-            ),
-            FREE_GIFT_SKU: settings.FREE_GIFT_SKU,
-          },
-          requestedStatus: isActive ? "ACTIVE" : "DEACTIVE",
-        }),
-      });
-
-      const data = await res.json();
-
-      if (!data.success) {
-        toastError(data.error || "Error saving changes");
-        return;
-      }
-
-      toastSuccess("Settings updated successfully!");
-      setTimeout(() => navigate("/app"), 700);
-    } catch (err) {
-      toastError(err.message);
-    } finally {
-      setLoading(false);
-    }
+    save({
+      settings: getFormattedSettings(),
+      requestedStatus: isActive ? "ACTIVE" : "INACTIVE",
+    });
   }
 
-  async function handleStatusToggle(newStatus) {
-    if (!discountId) return toastError("Discount ID not found.");
-
-    setLoading(true);
-    try {
-      const res = await fetch(ACTIVATE_PATH, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          discountId,
-          settings,
-          requestedStatus: newStatus,
-        }),
-      });
-
-      const data = await res.json();
-
-      if (data.success) {
-        setIsActive(newStatus === "ACTIVE");
-        toastSuccess(
-          `Discount ${newStatus.toLowerCase()}d and settings saved!`
-        );
-      } else {
-        toastError("Error: " + JSON.stringify(data.errors || data.error));
-      }
-    } catch (err) {
-      console.error(err);
-      toastError("Local JS Error: " + err.message);
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function handleDeleteConfirmed() {
-    if (!discountId) return;
-
-    setLoading(true);
-    try {
-      const res = await fetch(DELETE_PATH, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ discountId }),
-      });
-
-      const data = await res.json();
-
-      if (!data.success) {
-        toastError("Error deleting discount");
-        return;
-      }
-
-      navigate("/app");
-    } catch (err) {
-      toastError(err.message);
-    } finally {
-      setLoading(false);
-      setConfirmOpen(false);
-    }
+  function handleToggle(newStatus) {
+    toggleStatus({
+      settings: getFormattedSettings(),
+      newStatus,
+    });
+    setIsActive(newStatus === "ACTIVE");
   }
 
   return (
@@ -227,114 +114,142 @@ export default function DashboardPage() {
       <Breadcrumbs />
 
       <s-section>
-        <h2 style={{ fontSize: "17px", marginTop: 0 }}>{metadata.name}</h2>
-        <p style={{ fontSize: "15px" }}>{metadata.description}</p>
 
-        <s-section>
-          <label>
-            Discount name:{" "}
-            <input
-              type="text"
+        {banner && (
+          <div style={{ marginBottom: "16px" }}>
+            <s-banner
+              tone={banner.tone}
+              dismissible
+              onDismiss={() => setBanner(null)}
+            >
+              {banner.message}
+            </s-banner>
+          </div>
+        )}
+
+        <s-stack gap="200">
+          <div style={{ display: "flex", gap: "10px", marginBottom: "10px" }}>
+            <s-heading variant="headingMd">{metadata.name}</s-heading>
+            {hasDiscount && (
+              <s-badge tone={isActive ? "success" : "info"}>
+                {isActive ? "Active" : "Inactive"}
+              </s-badge>
+            )}
+          </div>
+
+          <s-text tone="subdued">{metadata.description}</s-text>
+
+          <div style={{ width: "40%", marginTop: "10px" }}>
+            <s-text-field
+              label="Discount name"
               value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              disabled={creating}
+              disabled={loading}
+              onInput={(e) => setTitle(e.target.value)}
             />
-          </label>
+          </div>
 
-          <s-section>
-            {metadata.settings.map((setting) => (
-              <div key={setting.key} style={{ marginBottom: "1rem" }}>
-                <label>
-                  {setting.label}:{" "}
-                  <input
+          <s-stack gap="200">
+            <div
+              style={{
+                display: "flex",
+                gap: 20,
+                alignItems: "flex-end",
+                flexWrap: "wrap",
+                margin: "10px 0",
+              }}
+            >
+              {metadata.settings.map((setting) => (
+                <div key={setting.key} style={{ minWidth: 220 }}>
+
+                {setting.key === "CART_TOTAL_THRESHOLD" ? (
+                  <s-money-field
+                    label={setting.label}
+                    currency="EUR"
+                    value={settings.CART_TOTAL_THRESHOLD || 0}
+                    disabled={loading}
+                    onInput={(e) =>
+                      handleSettingChange(
+                        "CART_TOTAL_THRESHOLD",
+                        parseFloat(e.target.value || 0)
+                      )
+                    }
+                  />
+                ) : setting.key === "FREE_GIFT_SKU" ? (
+                  <VariantSkuPicker
+                    label={setting.label}
+                    value={settings.FREE_GIFT_SKU}
+                    disabled={loading}
+                    onChange={(sku) =>
+                      handleSettingChange("FREE_GIFT_SKU", sku)
+                    }
+                    onError={(msg) =>
+                      setBanner({ message: msg, tone: "critical" })
+                    }
+                  />
+                
+                ) : (
+                  <s-text-field
+                    label={setting.label}
                     type={setting.type}
-                    value={settings[setting.key]}
-                    onChange={(e) =>
+                    value={(settings[setting.key] ?? "").toString()}
+                    disabled={loading}
+                    onInput={(e) =>
                       handleSettingChange(
                         setting.key,
                         setting.type === "number"
-                          ? parseInt(e.target.value, 10)
+                          ? parseFloat(e.target.value || 0)
                           : e.target.value
                       )
                     }
-                    disabled={loading || creating}
                   />
-                </label>
-              </div>
-            ))}
-          </s-section>
+                )}
 
-          <div style={{ marginTop: "1rem" }}>
-            <s-button
-              onClick={isEdit ? handleSaveChanges : handleCreateDiscount}
-              disabled={creating}
-              type="button"
-            >
-              {creating
-                ? isEdit
-                  ? "Saving..."
-                  : "Creating..."
-                : isEdit
-                ? "Save changes"
-                : "Create Free Gift Discount"}
-            </s-button>
-          </div>
-        </s-section>
-
-        {hasDiscount && (
-          <s-section>
-            <p>
-              Status:{" "}
-              <span
-                style={{
-                  display: "inline-block",
-                  padding: "2px 12px",
-                  borderRadius: "999px",
-                  fontSize: "12px",
-                  fontWeight: 600,
-                  backgroundColor:
-                    isActive === "Active"
-                      ? "rgba(239,68,68,0.15)"
-                      : "rgba(34,197,94,0.15)",
-                  color: isActive === "Active" ? "#dc2626" : "#16a34a",
-                }}
-              >
-                {isActive ? "Active" : "Inactive"}
-              </span>
-            </p>
-          </s-section>
-        )}
-
-        {isEdit && (
-          <s-section>
-            <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
-              <s-button
-                onClick={() => handleStatusToggle("ACTIVE")}
-                disabled={isActive || loading}
-                type="button"
-              >
-                {loading ? "Processing..." : "Activate Free Gift Discount"}
-              </s-button>
-
-              <s-button
-                onClick={() => handleStatusToggle("DEACTIVE")}
-                disabled={!isActive || loading}
-                type="button"
-              >
-                {loading ? "Processing..." : "Deactivate Free Gift Discount"}
-              </s-button>
-
-              <s-button
-                tone="critical"
-                onClick={() => setConfirmOpen(true)}
-                disabled={loading}
-                type="button"
-              >
-                Delete Discount
-              </s-button>
+                </div>
+              ))}
             </div>
-          </s-section>
-        )}
+          </s-stack>
+
+          {isEdit && (
+            <s-inline-stack gap="200" wrap>
+              <div style={{ display: "flex", gap: "10px", marginBottom: "10px" }}>
+                <s-button
+                  onClick={() => handleToggle("ACTIVE")}
+                  disabled={isActive || loading}
+                >
+                  Activate
+                </s-button>
+
+                <s-button
+                  onClick={() => handleToggle("DEACTIVE")}
+                  disabled={!isActive || loading}
+                >
+                  Deactivate
+                </s-button>
+
+                <s-button
+                  tone="critical"
+                  onClick={() => setConfirmOpen(true)}
+                  disabled={loading}
+                >
+                  Delete discount
+                </s-button>
+              </div>
+            </s-inline-stack>
+          )}
+        </s-stack>
+
+        <s-button
+          onClick={isEdit ? handleSave : handleCreate}
+          disabled={loading}
+        >
+          {loading
+            ? isEdit
+              ? "Saving..."
+              : "Creating..."
+            : isEdit
+            ? "Save changes"
+            : "Create free gift discount"}
+        </s-button>
       </s-section>
 
       {confirmOpen && (
@@ -345,15 +260,9 @@ export default function DashboardPage() {
           cancelLabel="No"
           loading={loading}
           onCancel={() => setConfirmOpen(false)}
-          onConfirm={handleDeleteConfirmed}
+          onConfirm={remove}
         />
       )}
-
-      <Toast
-        message={toast?.message}
-        tone={toast?.tone}
-        onClose={() => setToast(null)}
-      />
     </s-page>
   );
 }
