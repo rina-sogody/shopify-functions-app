@@ -11,22 +11,12 @@ export default function CreateDiscountPage() {
         <s-stack direction="block" gap="base">
 
           <s-card>
-            <s-heading>Free Gift</s-heading>
+            <s-heading>Free Gift (Cart Threshold)</s-heading>
             <s-paragraph>
               Give a free product when cart total exceeds a threshold.
             </s-paragraph>
             <s-button onClick={() => navigate("/app/free-gift")} type="button">
               Create Free Gift
-            </s-button>
-          </s-card>
-
-          <s-card>
-            <s-heading>Tiered Discount</s-heading>
-            <s-paragraph>
-              Apply tiered discount based on cart total tiers.
-            </s-paragraph>
-            <s-button onClick={() => navigate("/app/flex-discount")} type="button">
-              Create Tiered Discount
             </s-button>
           </s-card>
 
@@ -37,6 +27,16 @@ export default function CreateDiscountPage() {
             </s-paragraph>
             <s-button onClick={() => navigate("/app/free-gift-by-variant")} type="button">
               Create Variant Gift
+            </s-button>
+          </s-card>
+
+          <s-card>
+            <s-heading>Tiered Discount</s-heading>
+            <s-paragraph>
+              Apply tiered discount based on cart total tiers.
+            </s-paragraph>
+            <s-button onClick={() => navigate("/app/flex-discount")} type="button">
+              Create Tiered Discount
             </s-button>
           </s-card>
 
