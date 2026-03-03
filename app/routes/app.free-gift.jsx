@@ -152,8 +152,7 @@ export default function DashboardPage() {
             <div
               style={{
                 display: "flex",
-                gap: 20,
-                alignItems: "flex-end",
+                flexDirection : "column",
                 flexWrap: "wrap",
                 margin: "10px 0",
               }}
@@ -162,18 +161,20 @@ export default function DashboardPage() {
                 <div key={setting.key} style={{ minWidth: 220 }}>
 
                 {setting.key === "CART_TOTAL_THRESHOLD" ? (
-                  <s-money-field
-                    label={setting.label}
-                    currency="EUR"
-                    value={settings.CART_TOTAL_THRESHOLD || 0}
-                    disabled={loading}
-                    onInput={(e) =>
-                      handleSettingChange(
-                        "CART_TOTAL_THRESHOLD",
-                        parseFloat(e.target.value || 0)
-                      )
-                    }
-                  />
+                  <div style={{width: "40%"}}>
+                    <s-money-field
+                      label={setting.label}
+                      currency="EUR"
+                      value={settings.CART_TOTAL_THRESHOLD || 0}
+                      disabled={loading}
+                      onInput={(e) =>
+                        handleSettingChange(
+                          "CART_TOTAL_THRESHOLD",
+                          parseFloat(e.target.value || 0)
+                        )
+                      }
+                    />
+                  </div>
                 ) : setting.key === "FREE_GIFT_SKU" ? (
                   <VariantSkuPicker
                     label={setting.label}

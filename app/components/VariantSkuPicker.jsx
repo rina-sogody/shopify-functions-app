@@ -144,6 +144,7 @@ export default function VariantSkuPicker({
             alignItems: "center",
             justifyContent: "space-between",
             marginTop: "12px",
+            gap: "10px"
           }}
         >
           <div
