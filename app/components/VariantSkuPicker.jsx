@@ -38,6 +38,12 @@ export default function VariantSkuPicker({
             productId: product.id,
             title: variant.title,
             productTitle: product.title,
+            image:
+            variant.image?.originalSrc ||
+            product.images?.[0]?.originalSrc ||
+            product.images?.[0]?.src ||
+            product.media?.[0]?.preview?.image?.url ||
+            null,
           });
         });
       });
@@ -98,15 +104,22 @@ export default function VariantSkuPicker({
                   gap: "12px",
                 }}
               >
-                {/* <s-thumbnail
-                  source={variant.image}
-                  size="small"
-                  alt={variant.title}
-                /> */}
+                {variant.image ? (
+                  <s-thumbnail
+                    src={variant.image}
+                    size="small"
+                    alt={variant.title}
+                  />
+                ) : (
+                 <span>no variant image</span>
+                )}
 
                 <div style={{ display: "flex", flexDirection: "column" }}>
                   <s-text>{variant.productTitle}</s-text>
-                  <s-text tone="subdued">{variant.title}</s-text>
+                  {variant.title?.trim() &&
+                    variant.title.trim() !== "Default Title" && (
+                      <s-text tone="subdued">{variant.title}</s-text>
+                  )}
                   <s-text tone="subdued">SKU: {variant.sku}</s-text>
                 </div>
               </div>
@@ -140,17 +153,22 @@ export default function VariantSkuPicker({
               gap: "12px",
             }}
           >
-            {value?.image && (
+            {value?.image ? (
               <s-thumbnail
-                source={value.image}
+                src={value.image}
                 size="small"
                 alt={value.title}
               />
+            ) : (
+              <div style={{ width: 40, height: 40 }} />
             )}
 
             <div style={{ display: "flex", flexDirection: "column" }}>
               <s-text>{value.productTitle}</s-text>
-              <s-text tone="subdued">{value.title}</s-text>
+              {value.title?.trim() &&
+                value.title.trim() !== "Default Title" && (
+                  <s-text tone="subdued">{value.title}</s-text>
+              )}
               <s-text tone="subdued">SKU: {value.sku}</s-text>
             </div>
           </div>
