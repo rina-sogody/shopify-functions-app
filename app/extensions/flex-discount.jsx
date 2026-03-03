@@ -1,6 +1,6 @@
 export const metadata = {
   name: 'Tiered Discount',
-  description: 'Applies tiered percentage discounts based on eligible product SKUs.',
+  description: "Applies tiered percentage discounts to all products by default. If specific products are selected, the discount applies only to those products.",
   settings: [
     {
       key: 'eligibleSkus',
