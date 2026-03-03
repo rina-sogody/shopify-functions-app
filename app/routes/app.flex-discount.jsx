@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 import { useState } from "react";
 import { useLoaderData, useNavigate } from "react-router";
 
@@ -6,14 +7,11 @@ import { createDiscountLoader } from "./loaders/createDiscountLoader";
 import { useDiscount } from "./hooks/useDiscount";
 
 import Breadcrumbs from "../components/Breadcrumbs";
-import ConfirmModal from "../components/ConfirmModal";
 import VariantSkuPicker from "../components/VariantSkuPicker"
 
 export const loader = createDiscountLoader("flex");
 
 export default function FlexDiscountPage() {
-  const [confirmOpen, setConfirmOpen] = useState(false);
-
   const navigate = useNavigate();
   const { status, discountId, mode } = useLoaderData();
 
@@ -23,28 +21,28 @@ export default function FlexDiscountPage() {
   const [isActive, setIsActive] = useState(status?.status === "ACTIVE");
   const [title, setTitle] = useState(status?.title || "");
 
-const [settings, setSettings] = useState(() => {
-  if (status?.hydratedSettings) {
-    return {
-      tiers: status.hydratedSettings.tiers || [],
-      eligibleSkus: status.hydratedSettings.eligibleSkus || [],
-    };
-  }
-
-  if (status?.metafield?.value) {
-    try {
-      const parsed = JSON.parse(status.metafield.value);
+  const [settings, setSettings] = useState(() => {
+    if (status?.hydratedSettings) {
       return {
-        tiers: parsed.tiers || [],
-        eligibleSkus: parsed.eligibleSkus || [],
+        tiers: status.hydratedSettings.tiers || [],
+        eligibleSkus: status.hydratedSettings.eligibleSkus || [],
       };
-    } catch {
-      return { tiers: [], eligibleSkus: [] };
     }
-  }
 
-  return { tiers: [], eligibleSkus: [] };
-});
+    if (status?.metafield?.value) {
+      try {
+        const parsed = JSON.parse(status.metafield.value);
+        return {
+          tiers: parsed.tiers || [],
+          eligibleSkus: parsed.eligibleSkus || [],
+        };
+      } catch {
+        return { tiers: [], eligibleSkus: [] };
+      }
+    }
+
+    return { tiers: [], eligibleSkus: [] };
+  });
 
   const {
     loading,
@@ -75,17 +73,12 @@ const [settings, setSettings] = useState(() => {
     }
 
     for (const tier of settings.tiers) {
-      if (tier.threshold === undefined || tier.threshold === null) {
-        bannerError("Threshold is required");
-        return false;
-      }
-
-      if (isNaN(tier.threshold) || tier.threshold <= 0) {
+      if (!tier.threshold || tier.threshold <= 0) {
         bannerError("Threshold must be greater than 0");
         return false;
       }
 
-      if (isNaN(tier.percent) || tier.percent <= 0 || tier.percent > 100) {
+      if (!tier.percent || tier.percent <= 0 || tier.percent > 100) {
         bannerError("Discount percent must be between 1 and 100");
         return false;
       }
@@ -126,8 +119,40 @@ const [settings, setSettings] = useState(() => {
     setIsActive(newStatus === "ACTIVE");
   }
 
+  function handleDelete() {
+    remove();
+  }
+
   return (
     <s-page backAction={{ content: "Discounts", url: "/app" }}>
+
+      <s-modal
+        id="delete-flex-discount-modal"
+        heading="Are you sure you want to delete this discount?"
+      >
+        <s-text>This action cannot be undone.</s-text>
+
+        <s-button
+          slot="primary-action"
+          variant="primary"
+          tone="critical"
+          loading={loading}
+          onClick={handleDelete}
+          commandFor="delete-flex-discount-modal"
+          command="--hide"
+        >
+          Yes
+        </s-button>
+
+        <s-button
+          slot="secondary-actions"
+          commandFor="delete-flex-discount-modal"
+          command="--hide"
+        >
+          No
+        </s-button>
+      </s-modal>
+
       <Breadcrumbs />
 
       <s-section>
@@ -232,9 +257,10 @@ const [settings, setSettings] = useState(() => {
           </s-section>
         </div>
 
+        {/* ELIGIBLE VARIANTS */}
         <div style={{ margin: "20px 0" }}>
           <VariantSkuPicker
-            label="Eligible variants: "
+            label="Eligible variants:"
             value={settings.eligibleSkus}
             multiple
             disabled={loading}
@@ -261,7 +287,12 @@ const [settings, setSettings] = useState(() => {
                 Deactivate
               </s-button>
 
-              <s-button tone="critical" onClick={() => setConfirmOpen(true)} disabled={loading}>
+              <s-button
+                tone="critical"
+                commandFor="delete-flex-discount-modal"
+                command="--show"
+                disabled={loading}
+              >
                 Delete discount
               </s-button>
             </div>
@@ -274,18 +305,6 @@ const [settings, setSettings] = useState(() => {
           </s-button>
         </div>
       </s-section>
-
-      {confirmOpen && (
-        <ConfirmModal
-          open={confirmOpen}
-          title="Are you sure you want to delete this discount?"
-          confirmLabel="Yes"
-          cancelLabel="No"
-          loading={loading}
-          onCancel={() => setConfirmOpen(false)}
-          onConfirm={remove}
-        />
-      )}
     </s-page>
   );
 }

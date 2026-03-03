@@ -1,3 +1,4 @@
+/* eslint-disable no-undef */
 import { useState, useEffect } from "react";
 import { useLoaderData, useNavigate } from "react-router";
 
@@ -5,7 +6,6 @@ import { createDiscountLoader } from "./loaders/createDiscountLoader";
 import { useDiscount } from "./hooks/useDiscount";
 
 import Breadcrumbs from "../components/Breadcrumbs";
-import ConfirmModal from "../components/ConfirmModal";
 import VariantSkuPicker from "../components/VariantSkuPicker";
 
 export const loader = createDiscountLoader("freeGiftVariant");
@@ -16,10 +16,12 @@ export default function FreeGiftVariantPage() {
 
   const isEdit = mode === "edit";
 
-  const [confirmOpen, setConfirmOpen] = useState(false);
   const [title, setTitle] = useState(status?.title || "");
   const [isActive, setIsActive] = useState(status?.status === "ACTIVE");
-  const [settings, setSettings] = useState({});
+  const [settings, setSettings] = useState({
+    triggerSku: null,
+    giftSku: null,
+  });
 
   const {
     loading,
@@ -46,17 +48,17 @@ export default function FreeGiftVariantPage() {
       bannerError("Discount name is required");
       return false;
     }
-  
+
     if (!settings?.triggerSku?.sku) {
       bannerError("Trigger variant is required");
       return false;
     }
-  
+
     if (!settings?.giftSku?.sku) {
       bannerError("Gift variant is required");
       return false;
     }
-  
+
     return true;
   }
 
@@ -65,38 +67,109 @@ export default function FreeGiftVariantPage() {
 
     try {
       const parsed = JSON.parse(status.metafield.value);
+
+      const normalizeSku = (value) => {
+        if (!value) return null;
+
+        if (typeof value === "string") {
+          return {
+            sku: value,
+            variantId: null,
+            productId: null,
+            title: "",
+            productTitle: "",
+            image: null,
+          };
+        }
+
+        if (typeof value === "object") {
+          return {
+            sku: value.sku ?? null,
+            variantId: value.variantId ?? null,
+            productId: value.productId ?? null,
+            title: value.title ?? "",
+            productTitle: value.productTitle ?? "",
+            image: value.image ?? null,
+          };
+        }
+
+        return null;
+      };
+
       setSettings({
-        triggerSku: parsed.triggerSku ?? "",
-        giftSku: parsed.giftSku ?? "",
+        triggerSku: normalizeSku(parsed.triggerSku),
+        giftSku: normalizeSku(parsed.giftSku),
       });
+
+      setTitle(status?.title || "");
+      setIsActive(status?.status === "ACTIVE");
+
     } catch (e) {
       console.error("Metafield parse error", e);
     }
   }, [status]);
 
+  function getFormattedSettings() {
+    return {
+      triggerSku: settings.triggerSku || null,
+      giftSku: settings.giftSku || null,
+    };
+  }
+
   function handleCreate() {
     if (!validate()) return;
-    create({ title, settings });
+    create({ title, settings: getFormattedSettings() });
   }
 
   function handleSave() {
     if (!validate()) return;
     save({
-      settings,
+      settings: getFormattedSettings(),
       requestedStatus: isActive ? "ACTIVE" : "INACTIVE",
     });
   }
 
   function handleToggle(newStatus) {
     toggleStatus({
-      settings,
+      settings: getFormattedSettings(),
       newStatus,
     });
     setIsActive(newStatus === "ACTIVE");
   }
 
+  function handleDelete() {
+    remove();
+  }
+
   return (
     <s-page backAction={{ content: "Discounts", url: "/app" }}>
+      <s-modal
+        id="delete-variant-discount-modal"
+        heading="Are you sure you want to delete this discount?"
+      >
+        <s-text>This action cannot be undone.</s-text>
+
+        <s-button
+          slot="primary-action"
+          variant="primary"
+          tone="critical"
+          loading={loading}
+          onClick={handleDelete}
+          commandFor="delete-variant-discount-modal"
+          command="--hide"
+        >
+          Yes
+        </s-button>
+
+        <s-button
+          slot="secondary-actions"
+          commandFor="delete-variant-discount-modal"
+          command="--hide"
+        >
+          No
+        </s-button>
+      </s-modal>
+
       <Breadcrumbs />
 
       <s-section>
@@ -133,31 +206,32 @@ export default function FreeGiftVariantPage() {
               disabled={loading}
               onInput={(e) => setTitle(e.target.value)}
             />
+
             <div style={{ marginTop: "10px" }}>
               <s-stack gap="200">
-                <div style={{display: "flex", flexDirection: "column", gap: "10px"}}>
+                <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
 
-                <VariantSkuPicker
-                  label="Trigger variant: "
-                  value={settings.triggerSku}
-                  disabled={loading}
-                  onChange={(sku) => updateSetting("triggerSku", sku)}
-                  onError={(msg) =>
-                    setBanner({ message: msg, tone: "critical" })
-                  }
-                />
+                  <VariantSkuPicker
+                    label="Trigger variant:"
+                    value={settings.triggerSku}
+                    disabled={loading}
+                    onChange={(sku) => updateSetting("triggerSku", sku)}
+                    onError={(msg) =>
+                      setBanner({ message: msg, tone: "critical" })
+                    }
+                  />
 
-                <VariantSkuPicker
-                  label="Gift variant: "
-                  value={settings.giftSku}
-                  disabled={loading}
-                  onChange={(sku) => updateSetting("giftSku", sku)}
-                  onError={(msg) =>
-                    setBanner({ message: msg, tone: "critical" })
-                  }
-                />
+                  <VariantSkuPicker
+                    label="Gift variant:"
+                    value={settings.giftSku}
+                    disabled={loading}
+                    onChange={(sku) => updateSetting("giftSku", sku)}
+                    onError={(msg) =>
+                      setBanner({ message: msg, tone: "critical" })
+                    }
+                  />
+
                 </div>
-
               </s-stack>
             </div>
           </div>
@@ -181,7 +255,8 @@ export default function FreeGiftVariantPage() {
 
                 <s-button
                   tone="critical"
-                  onClick={() => setConfirmOpen(true)}
+                  commandFor="delete-variant-discount-modal"
+                  command="--show"
                   disabled={loading}
                 >
                   Delete discount
@@ -204,18 +279,6 @@ export default function FreeGiftVariantPage() {
           </div>
         </s-stack>
       </s-section>
-
-      {confirmOpen && (
-        <ConfirmModal
-          open={confirmOpen}
-          title="Are you sure you want to delete this discount?"
-          confirmLabel="Yes"
-          cancelLabel="No"
-          loading={loading}
-          onCancel={() => setConfirmOpen(false)}
-          onConfirm={remove}
-        />
-      )}
     </s-page>
   );
 }
