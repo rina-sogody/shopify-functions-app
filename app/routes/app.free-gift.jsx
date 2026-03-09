@@ -1,17 +1,15 @@
 /* eslint-disable no-undef */
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useLoaderData, useNavigate } from "react-router";
 
 import { metadata } from "../extensions/free-gift";
 import { createDiscountLoader } from "./loaders/createDiscountLoader";
 import { useDiscount } from "./hooks/useDiscount";
-
-import Breadcrumbs from "../components/Breadcrumbs";
 import VariantSkuPicker from "../components/VariantSkuPicker";
 
 export const loader = createDiscountLoader("freeGift");
 
-export default function DashboardPage() {
+export default function FreeGiftPage() {
   const navigate = useNavigate();
   const { status, discountId, mode } = useLoaderData();
 
@@ -25,10 +23,10 @@ export default function DashboardPage() {
       metadata.settings.find((s) => s.key === "CART_TOTAL_THRESHOLD")?.default ?? 0,
     FREE_GIFT_SKU: null,
   });
+  const initialState = useRef(null);
 
   const {
     loading,
-    banner,
     setBanner,
     create,
     save,
@@ -43,31 +41,35 @@ export default function DashboardPage() {
   const bannerError = (message) =>
     setBanner({ message, tone: "critical" });
 
-  function validateForm() {
+  const updateSetting = (key, value) => {
+    setSettings((prev) => ({ ...prev, [key]: value }));
+  };
+
+  const handleTitleChange = (value) => {
+    setTitle(value);
+  };
+
+  function validate() {
     if (!title?.trim()) {
-      bannerError("Discount title is required");
+      bannerError("Discount name is required");
       return false;
     }
-
     if (!settings?.FREE_GIFT_SKU?.sku) {
-      bannerError("Free gift SKU is required");
+      bannerError("Free gift variant is required");
       return false;
     }
-
+    if (!settings?.CART_TOTAL_THRESHOLD || settings.CART_TOTAL_THRESHOLD <= 0) {
+      bannerError("Cart threshold must be greater than 0");
+      return false;
+    }
     return true;
   }
 
-  const handleSettingChange = (key, value) =>
-    setSettings((prev) => ({ ...prev, [key]: value }));
-
   useEffect(() => {
     if (!status?.metafield?.value) return;
-  
     try {
       const parsed = JSON.parse(status.metafield.value);
-  
       let normalizedSku = null;
-  
       if (parsed.sku) {
         if (typeof parsed.sku === "string") {
           normalizedSku = { sku: parsed.sku };
@@ -75,18 +77,19 @@ export default function DashboardPage() {
           normalizedSku = parsed.sku;
         }
       }
-  
-      setSettings((prev) => ({
-        ...prev,
+      const newSettings = {
         CART_TOTAL_THRESHOLD:
           parsed.threshold !== undefined && parsed.threshold !== null
             ? parsed.threshold / 100
-            : prev.CART_TOTAL_THRESHOLD,
+            : settings.CART_TOTAL_THRESHOLD,
         FREE_GIFT_SKU: normalizedSku,
-      }));
+      };
+      setSettings(newSettings);
+      initialState.current = { title: status?.title || "", settings: newSettings };
     } catch (e) {
       console.error("Metafield parse error", e);
     }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status]);
 
   function getFormattedSettings() {
@@ -97,13 +100,14 @@ export default function DashboardPage() {
   }
 
   function handleCreate() {
-    if (!validateForm()) return;
+    if (!validate()) return;
     create({ title, settings: getFormattedSettings() });
   }
 
   function handleSave() {
-    if (!validateForm()) return;
+    if (!validate()) return;
     save({
+      title,
       settings: getFormattedSettings(),
       requestedStatus: isActive ? "ACTIVE" : "INACTIVE",
     });
@@ -122,173 +126,99 @@ export default function DashboardPage() {
   }
 
   return (
-    <s-page backAction={{ content: "Discounts", url: "/app" }}>
+    <s-page heading={isEdit ? "Edit Free Gift Discount" : "Create Free Gift Discount"}>
+      <s-link slot="breadcrumb-actions" href="/app">Discounts</s-link>
 
-      <s-modal id="delete-discount-modal" heading="Are you sure you want to delete this discount?">
-        <s-text>This action cannot be undone.</s-text>
+      {isEdit && (
+        <>
+          <s-button slot="secondary-actions" onClick={() => handleToggle(isActive ? "INACTIVE" : "ACTIVE")} disabled={loading}>
+            {isActive ? "Deactivate" : "Activate"}
+          </s-button>
+          <s-button slot="secondary-actions" tone="critical" commandFor="delete-free-gift-modal" command="--show" disabled={loading}>
+            Delete
+          </s-button>
+        </>
+      )}
+      <s-button slot="primary-action" variant="primary" onClick={isEdit ? handleSave : handleCreate} disabled={loading} loading={loading}>
+        {isEdit ? "Save" : "Create"}
+      </s-button>
 
+      {/* Delete Modal */}
+      <s-modal id="delete-free-gift-modal" heading="Delete this discount?">
+        <s-paragraph>This action cannot be undone. The discount will be permanently removed.</s-paragraph>
         <s-button
           slot="primary-action"
           variant="primary"
           tone="critical"
           loading={loading}
           onClick={handleDelete}
-          commandFor="delete-discount-modal"
+          commandFor="delete-free-gift-modal"
           command="--hide"
         >
-          Yes
+          Delete
         </s-button>
-
         <s-button
           slot="secondary-actions"
-          commandFor="delete-discount-modal"
+          commandFor="delete-free-gift-modal"
           command="--hide"
         >
-          No
+          Cancel
         </s-button>
       </s-modal>
 
-      <Breadcrumbs />
-
-      <s-section>
-
-        {banner && (
-          <div style={{ marginBottom: "16px" }}>
-            <s-banner
-              tone={banner.tone}
-              dismissible
-              onDismiss={() => setBanner(null)}
-            >
-              {banner.message}
-            </s-banner>
-          </div>
-        )}
-
-        <s-stack gap="200">
-          <div style={{ display: "flex", gap: "10px", marginBottom: "10px" }}>
-            <s-heading variant="headingMd">{metadata.name}</s-heading>
-            {hasDiscount && (
-              <s-badge tone={isActive ? "success" : "info"}>
-                {isActive ? "Active" : "Inactive"}
-              </s-badge>
-            )}
-          </div>
-
-          <s-text tone="subdued">{metadata.description}</s-text>
-
-          <div style={{ width: "40%", marginTop: "10px" }}>
-            <s-text-field
-              label="Discount name"
-              value={title}
-              disabled={loading}
-              onInput={(e) => setTitle(e.target.value)}
-            />
-          </div>
-
-          <s-stack gap="200">
-            <div
-              style={{
-                display: "flex",
-                flexDirection : "column",
-                flexWrap: "wrap",
-                margin: "10px 0",
-              }}
-            >
-              {metadata.settings.map((setting) => (
-                <div key={setting.key} style={{ minWidth: 220 }}>
-
-                {setting.key === "CART_TOTAL_THRESHOLD" ? (
-                  <div style={{width: "40%"}}>
-                    <s-money-field
-                      label={setting.label}
-                      currency="EUR"
-                      value={settings.CART_TOTAL_THRESHOLD || 0}
-                      disabled={loading}
-                      onInput={(e) =>
-                        handleSettingChange(
-                          "CART_TOTAL_THRESHOLD",
-                          parseFloat(e.target.value || 0)
-                        )
-                      }
-                    />
-                  </div>
-                ) : setting.key === "FREE_GIFT_SKU" ? (
-                  <VariantSkuPicker
-                    label={setting.label}
-                    value={settings.FREE_GIFT_SKU}
-                    disabled={loading}
-                    onChange={(sku) =>
-                      handleSettingChange("FREE_GIFT_SKU", sku)
-                    }
-                    onError={(msg) =>
-                      setBanner({ message: msg, tone: "critical" })
-                    }
-                  />
-                
-                ) : (
-                  <s-text-field
-                    label={setting.label}
-                    type={setting.type}
-                    value={(settings[setting.key] ?? "").toString()}
-                    disabled={loading}
-                    onInput={(e) =>
-                      handleSettingChange(
-                        setting.key,
-                        setting.type === "number"
-                          ? parseFloat(e.target.value || 0)
-                          : e.target.value
-                      )
-                    }
-                  />
-                )}
-
-                </div>
-              ))}
-            </div>
-          </s-stack>
-
-          {isEdit && (
-            <s-inline-stack gap="200" wrap>
-              <div style={{ display: "flex", gap: "10px", marginBottom: "10px" }}>
-                <s-button
-                  onClick={() => handleToggle("ACTIVE")}
-                  disabled={isActive || loading}
-                >
-                  Activate
-                </s-button>
-
-                <s-button
-                  onClick={() => handleToggle("DEACTIVE")}
-                  disabled={!isActive || loading}
-                >
-                  Deactivate
-                </s-button>
-
-                <s-button
-                  tone="critical"
-                  commandFor="delete-discount-modal"
-                  command="--show"
-                  disabled={loading}
-                >
-                  Delete discount
-                </s-button>
-              </div>
-            </s-inline-stack>
+      {/* Info Section */}
+      <s-section heading="How it works">
+        <s-stack gap="base">
+          {hasDiscount && (
+            <s-badge tone={isActive ? "success" : "info"}>
+              {isActive ? "Active" : "Inactive"}
+            </s-badge>
           )}
+          <s-paragraph>
+            When a customer cart total exceeds the threshold you set, a free gift product 
+            will automatically be added to their cart at checkout. This is great for 
+            encouraging larger orders and rewarding loyal customers.
+          </s-paragraph>
         </s-stack>
+      </s-section>
 
-        <s-button
-          onClick={isEdit ? handleSave : handleCreate}
+      {/* Discount Details */}
+      <s-section heading="Discount details">
+        <s-text-field
+          label="Discount name"
+          value={title}
           disabled={loading}
-        >
-          {loading
-            ? isEdit
-              ? "Saving..."
-              : "Creating..."
-            : isEdit
-            ? "Save changes"
-            : "Create free gift discount"}
-        </s-button>
+          onInput={(e) => handleTitleChange(e.target.value)}
+          helpText="This name is for your reference only. Customers will not see it."
+        />
+      </s-section>
+
+      {/* Cart Threshold */}
+      <s-section heading="Cart threshold">
+        <s-stack gap="base">
+          <s-paragraph>Set the minimum cart total required to trigger the free gift.</s-paragraph>
+          <s-money-field
+            label="Minimum cart total"
+            currency="EUR"
+            value={settings.CART_TOTAL_THRESHOLD}
+            disabled={loading}
+            onInput={(e) => updateSetting("CART_TOTAL_THRESHOLD", parseFloat(e.target.value || 0))}
+          />
+        </s-stack>
+      </s-section>
+
+      {/* Free Gift Selection */}
+      <s-section heading="Free gift product">
+        <s-stack gap="base">
+          <s-paragraph>Select the product variant that will be added as a free gift.</s-paragraph>
+          <VariantSkuPicker
+            label="Gift variant"
+            value={settings.FREE_GIFT_SKU}
+            disabled={loading}
+            onChange={(sku) => updateSetting("FREE_GIFT_SKU", sku)}
+            onError={(msg) => setBanner({ message: msg, tone: "critical" })}
+          />
+        </s-stack>
       </s-section>
     </s-page>
   );

@@ -1,20 +1,54 @@
 /* eslint-disable no-undef */
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useLoaderData, useNavigate } from "react-router";
 
+import VariantSkuPicker from "../components/VariantSkuPicker";
 import { createDiscountLoader } from "./loaders/createDiscountLoader";
 import { useDiscount } from "./hooks/useDiscount";
 
-import Breadcrumbs from "../components/Breadcrumbs";
-import VariantSkuPicker from "../components/VariantSkuPicker";
-
 export const loader = createDiscountLoader("freeGiftVariant");
+
+function normalizeSku(value) {
+  if (!value) return null;
+
+  if (typeof value === "string") {
+    return {
+      sku: value,
+      variantId: null,
+      productId: null,
+      title: "",
+      productTitle: "",
+      image: null,
+    };
+  }
+
+  if (typeof value === "object") {
+    return {
+      sku: value.sku ?? null,
+      variantId: value.variantId ?? null,
+      productId: value.productId ?? null,
+      title: value.title ?? "",
+      productTitle: value.productTitle ?? "",
+      image: value.image ?? null,
+    };
+  }
+
+  return null;
+}
+
+function variantSummary(value) {
+  if (!value) return "Not selected";
+
+  const name = value.productTitle || value.title || "Selected variant";
+  return value.sku ? `${name} (${value.sku})` : name;
+}
 
 export default function FreeGiftVariantPage() {
   const navigate = useNavigate();
   const { status, discountId, mode } = useLoaderData() || {};
 
   const isEdit = mode === "edit";
+  const hasDiscount = isEdit && Boolean(status);
 
   const [title, setTitle] = useState(status?.title || "");
   const [isActive, setIsActive] = useState(status?.status === "ACTIVE");
@@ -23,25 +57,17 @@ export default function FreeGiftVariantPage() {
     giftSku: null,
   });
 
-  const {
-    loading,
-    banner,
-    setBanner,
-    create,
-    save,
-    toggleStatus,
-    remove,
-  } = useDiscount({
+  const { loading, setBanner, create, save, toggleStatus, remove } = useDiscount({
     type: "freeGiftVariant",
     navigate,
     discountId,
   });
 
-  const bannerError = (message) =>
-    setBanner({ message, tone: "critical" });
+  const bannerError = (message) => setBanner({ message, tone: "critical" });
 
-  const updateSetting = (key, value) =>
-    setSettings((prev) => ({ ...prev, [key]: value }));
+  const updateSetting = (key, value) => {
+    setSettings((previous) => ({ ...previous, [key]: value }));
+  };
 
   function validate() {
     if (!title?.trim()) {
@@ -50,12 +76,12 @@ export default function FreeGiftVariantPage() {
     }
 
     if (!settings?.triggerSku?.sku) {
-      bannerError("Trigger variant is required");
+      bannerError("Trigger variant with SKU is required");
       return false;
     }
 
     if (!settings?.giftSku?.sku) {
-      bannerError("Gift variant is required");
+      bannerError("Gift variant with SKU is required");
       return false;
     }
 
@@ -68,34 +94,6 @@ export default function FreeGiftVariantPage() {
     try {
       const parsed = JSON.parse(status.metafield.value);
 
-      const normalizeSku = (value) => {
-        if (!value) return null;
-
-        if (typeof value === "string") {
-          return {
-            sku: value,
-            variantId: null,
-            productId: null,
-            title: "",
-            productTitle: "",
-            image: null,
-          };
-        }
-
-        if (typeof value === "object") {
-          return {
-            sku: value.sku ?? null,
-            variantId: value.variantId ?? null,
-            productId: value.productId ?? null,
-            title: value.title ?? "",
-            productTitle: value.productTitle ?? "",
-            image: value.image ?? null,
-          };
-        }
-
-        return null;
-      };
-
       setSettings({
         triggerSku: normalizeSku(parsed.triggerSku),
         giftSku: normalizeSku(parsed.giftSku),
@@ -103,9 +101,8 @@ export default function FreeGiftVariantPage() {
 
       setTitle(status?.title || "");
       setIsActive(status?.status === "ACTIVE");
-
-    } catch (e) {
-      console.error("Metafield parse error", e);
+    } catch (error) {
+      console.error("Metafield parse error", error);
     }
   }, [status]);
 
@@ -124,6 +121,7 @@ export default function FreeGiftVariantPage() {
   function handleSave() {
     if (!validate()) return;
     save({
+      title,
       settings: getFormattedSettings(),
       requestedStatus: isActive ? "ACTIVE" : "INACTIVE",
     });
@@ -134,6 +132,7 @@ export default function FreeGiftVariantPage() {
       settings: getFormattedSettings(),
       newStatus,
     });
+
     setIsActive(newStatus === "ACTIVE");
   }
 
@@ -142,141 +141,113 @@ export default function FreeGiftVariantPage() {
   }
 
   return (
-    <s-page backAction={{ content: "Discounts", url: "/app" }}>
-      <s-modal
-        id="delete-variant-discount-modal"
-        heading="Are you sure you want to delete this discount?"
+    <s-page heading={isEdit ? "Edit variant trigger discount" : "Create variant trigger discount"}>
+      <s-link slot="breadcrumb-actions" href="/app">
+        Discounts
+      </s-link>
+
+      {isEdit && (
+        <>
+          <s-button
+            slot="secondary-actions"
+            variant="secondary"
+            onClick={() => handleToggle(isActive ? "INACTIVE" : "ACTIVE")}
+            disabled={loading}
+          >
+            {isActive ? "Deactivate" : "Activate"}
+          </s-button>
+
+          <s-button
+            slot="secondary-actions"
+            tone="critical"
+            variant="secondary"
+            onClick={handleDelete}
+            disabled={loading}
+          >
+            Delete
+          </s-button>
+        </>
+      )}
+
+      <s-button
+        slot="primary-action"
+        variant="primary"
+        onClick={isEdit ? handleSave : handleCreate}
+        disabled={loading}
+        loading={loading}
       >
-        <s-text>This action cannot be undone.</s-text>
+        {isEdit ? "Save" : "Create"}
+      </s-button>
 
-        <s-button
-          slot="primary-action"
-          variant="primary"
-          tone="critical"
-          loading={loading}
-          onClick={handleDelete}
-          commandFor="delete-variant-discount-modal"
-          command="--hide"
-        >
-          Yes
-        </s-button>
-
-        <s-button
-          slot="secondary-actions"
-          commandFor="delete-variant-discount-modal"
-          command="--hide"
-        >
-          No
-        </s-button>
-      </s-modal>
-
-      <Breadcrumbs />
-
-      <s-section>
-
-        {banner && (
-          <div style={{ marginBottom: "16px" }}>
-            <s-banner
-              tone={banner.tone}
-              dismissible
-              onDismiss={() => setBanner(null)}
-            >
-              {banner.message}
-            </s-banner>
-          </div>
-        )}
-
-        <s-stack gap="200">
-          <div style={{ marginBottom: "10px", display: "flex", gap: "10px" }}>
-            <s-heading variant="headingMd">
-              Free gift triggered by variant
-            </s-heading>
-
-            {isEdit && status && (
-              <s-badge tone={isActive ? "success" : "info"}>
-                {isActive ? "Active" : "Inactive"}
-              </s-badge>
-            )}
-          </div>
-
-          <div style={{ maxWidth: "60%" }}>
-            <s-text-field
-              label="Discount name:"
-              value={title}
-              disabled={loading}
-              onInput={(e) => setTitle(e.target.value)}
-            />
-
-            <div style={{ marginTop: "10px" }}>
-              <s-stack gap="200">
-                <div style={{ display: "flex", flexDirection: "column", gap: "10px" }}>
-
-                  <VariantSkuPicker
-                    label="Trigger variant:"
-                    value={settings.triggerSku}
-                    disabled={loading}
-                    onChange={(sku) => updateSetting("triggerSku", sku)}
-                    onError={(msg) =>
-                      setBanner({ message: msg, tone: "critical" })
-                    }
-                  />
-
-                  <VariantSkuPicker
-                    label="Gift variant:"
-                    value={settings.giftSku}
-                    disabled={loading}
-                    onChange={(sku) => updateSetting("giftSku", sku)}
-                    onError={(msg) =>
-                      setBanner({ message: msg, tone: "critical" })
-                    }
-                  />
-
-                </div>
-              </s-stack>
-            </div>
-          </div>
-
-          {isEdit && (
-            <s-inline-stack gap="200" wrap>
-              <div style={{ display: "flex", gap: "10px", margin: "10px 0" }}>
-                <s-button
-                  onClick={() => handleToggle("ACTIVE")}
-                  disabled={isActive || loading}
-                >
-                  Activate
-                </s-button>
-
-                <s-button
-                  onClick={() => handleToggle("DEACTIVE")}
-                  disabled={!isActive || loading}
-                >
-                  Deactivate
-                </s-button>
-
-                <s-button
-                  tone="critical"
-                  commandFor="delete-variant-discount-modal"
-                  command="--show"
-                  disabled={loading}
-                >
-                  Delete discount
-                </s-button>
-              </div>
-            </s-inline-stack>
+      <s-section heading="Overview">
+        <s-stack gap="small-300">
+          {hasDiscount && (
+            <s-badge tone={isActive ? "success" : "info"}>
+              {isActive ? "Active" : "Inactive"}
+            </s-badge>
           )}
 
-          <div style={{ marginTop: "10px" }}>
-            <s-button
-              onClick={isEdit ? handleSave : handleCreate}
-              disabled={loading}
-            >
-              {loading
-                ? "Processing..."
-                : isEdit
-                ? "Save changes"
-                : "Create discount"}
-            </s-button>
-          </div>
+          <s-text-field
+            label="Discount name"
+            value={title}
+            disabled={loading}
+            onInput={(event) => setTitle(event.target.value)}
+            details="Internal name for Shopify Admin"
+          />
+
+          <s-paragraph color="subdued">
+            When the trigger variant is in cart, the gift variant is discounted by 100%.
+          </s-paragraph>
+        </s-stack>
+      </s-section>
+
+      <s-section heading="Variant mapping">
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit,minmax(320px,1fr))",
+            gap: "16px",
+          }}
+        >
+          <s-box padding="small-300" border="base" borderColor="base" borderRadius="base">
+            <s-stack gap="small-200">
+              <s-text type="strong">Trigger variant</s-text>
+              <s-text color="subdued">Customer must have this in cart</s-text>
+
+              <VariantSkuPicker
+                compact
+                label="Trigger variant"
+                value={settings.triggerSku}
+                disabled={loading}
+                onChange={(sku) => updateSetting("triggerSku", sku)}
+                onError={(message) => setBanner({ message, tone: "critical" })}
+              />
+            </s-stack>
+          </s-box>
+
+          <s-box padding="small-300" border="base" borderColor="base" borderRadius="base">
+            <s-stack gap="small-200">
+              <s-text type="strong">Gift variant</s-text>
+              <s-text color="subdued">This item becomes free</s-text>
+
+              <VariantSkuPicker
+                compact
+                label="Gift variant"
+                value={settings.giftSku}
+                disabled={loading}
+                onChange={(sku) => updateSetting("giftSku", sku)}
+                onError={(message) => setBanner({ message, tone: "critical" })}
+              />
+            </s-stack>
+          </s-box>
+        </div>
+      </s-section>
+
+      <s-section heading="Preview">
+        <s-stack gap="small-100">
+          <s-text type="strong">{variantSummary(settings.triggerSku)}</s-text>
+          <s-text color="subdued">triggers</s-text>
+          <s-text type="strong">{variantSummary(settings.giftSku)}</s-text>
         </s-stack>
       </s-section>
     </s-page>

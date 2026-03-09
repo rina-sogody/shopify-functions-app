@@ -4,7 +4,7 @@ import { discountConfig } from "./api/discountConfig.js";
 export async function action({ request }) {
   try {
     const body = await request.json();
-    const { discountId, settings, requestedStatus, type } = body;
+    const { discountId, settings, requestedStatus, type, title } = body;
 
     const config = discountConfig[type];
     if (!config) throw new Error("Unknown discount type");
@@ -21,6 +21,7 @@ export async function action({ request }) {
       appId: discountInfo.appId,
       nodeId: discountId,
       status: requestedStatus || "ACTIVE",
+      title,
       settings: transformedSettings,
       namespace: config.namespace,
     });
@@ -59,6 +60,7 @@ async function updateDiscountStatus({
   appId,
   nodeId,
   status,
+  title,
   settings,
   namespace,
 }) {
@@ -77,6 +79,9 @@ async function updateDiscountStatus({
     id: appId,
     input: {
       endsAt: status === "ACTIVE" ? null : new Date().toISOString(),
+      ...(typeof title === "string" && title.trim()
+        ? { title: title.trim() }
+        : {}),
     },
     metafields: [
       {
@@ -96,8 +101,21 @@ async function updateDiscountStatus({
     ...(result.data?.metafieldsSet?.userErrors || []),
   ];
 
-  if (userErrors.length) return { success: false, errors: userErrors };
-  if (result.errors) return { success: false, errors: result.errors };
+  if (userErrors.length) {
+    return {
+      success: false,
+      error: userErrors[0]?.message || "Failed to update discount",
+      errors: userErrors,
+    };
+  }
+
+  if (result.errors) {
+    return {
+      success: false,
+      error: result.errors[0]?.message || "Failed to update discount",
+      errors: result.errors,
+    };
+  }
 
   return { success: true };
 }

@@ -1,22 +1,36 @@
 import { useState } from "react";
 
+import { showToast } from "../../utils/toast";
+
 const CREATE_PATH = "/api/discount/create";
 const ACTIVATE_PATH = "/api/discount/activate";
 const DELETE_PATH = "/api/discount/delete";
 
 export function useDiscount({ type, navigate, discountId }) {
   const [loading, setLoading] = useState(false);
-  const [banner, setBanner] = useState(null);
 
-  const bannerError = (message) =>
-    setBanner({ message, tone: "critical" });
+  const setBanner = (banner) => {
+    if (!banner?.message) return;
+    showToast(banner.message, banner.tone);
+  };
 
-  const bannerSuccess = (message) =>
-    setBanner({ message, tone: "success" });
+  const bannerError = (message) => setBanner({ message, tone: "critical" });
+  const bannerSuccess = (message) => setBanner({ message, tone: "success" });
+
+  const getErrorMessage = (data, fallback) => {
+    if (data?.error) return data.error;
+
+    if (Array.isArray(data?.errors) && data.errors.length > 0) {
+      const first = data.errors[0];
+      if (typeof first === "string") return first;
+      if (first?.message) return first.message;
+    }
+
+    return fallback;
+  };
 
   async function create({ title, settings }) {
     setLoading(true);
-    setBanner(null);
 
     try {
       const res = await fetch(CREATE_PATH, {
@@ -32,19 +46,27 @@ export function useDiscount({ type, navigate, discountId }) {
       }
 
       bannerSuccess("Discount created successfully!");
-      setTimeout(() => navigate("/app"), 700);
-    } catch (e) {
-      bannerError(e.message);
+
+      const createdDiscountId = data?.discount?.nodeId;
+      if (createdDiscountId && !discountId) {
+        const pathname = typeof window !== "undefined" ? window.location.pathname : "";
+        if (pathname) {
+          navigate(`${pathname}?discountId=${encodeURIComponent(createdDiscountId)}`, {
+            replace: true,
+          });
+        }
+      }
+    } catch (error) {
+      bannerError(error.message);
     } finally {
       setLoading(false);
     }
   }
 
-  async function save({ settings, requestedStatus }) {
+  async function save({ settings, requestedStatus, title }) {
     if (!discountId) return bannerError("Missing discount ID");
 
     setLoading(true);
-    setBanner(null);
 
     try {
       const res = await fetch(ACTIVATE_PATH, {
@@ -54,6 +76,7 @@ export function useDiscount({ type, navigate, discountId }) {
           discountId,
           settings,
           requestedStatus,
+          title,
           type,
         }),
       });
@@ -61,13 +84,12 @@ export function useDiscount({ type, navigate, discountId }) {
       const data = await res.json();
 
       if (!data.success) {
-        return bannerError(data.error || "Error saving changes");
+        return bannerError(getErrorMessage(data, "Error saving changes"));
       }
 
       bannerSuccess("Changes saved successfully!");
-      setTimeout(() => navigate("/app"), 700);
-    } catch (e) {
-      bannerError(e.message);
+    } catch (error) {
+      bannerError(error.message);
     } finally {
       setLoading(false);
     }
@@ -77,7 +99,6 @@ export function useDiscount({ type, navigate, discountId }) {
     if (!discountId) return bannerError("Missing discount ID");
 
     setLoading(true);
-    setBanner(null);
 
     try {
       const res = await fetch(ACTIVATE_PATH, {
@@ -94,7 +115,7 @@ export function useDiscount({ type, navigate, discountId }) {
       const data = await res.json();
 
       if (!data.success) {
-        return bannerError(data.error || "Error updating status");
+        return bannerError(getErrorMessage(data, "Error updating status"));
       }
 
       bannerSuccess(
@@ -102,8 +123,8 @@ export function useDiscount({ type, navigate, discountId }) {
           ? "Discount activated successfully!"
           : "Discount deactivated successfully!"
       );
-    } catch (e) {
-      bannerError(e.message);
+    } catch (error) {
+      bannerError(error.message);
     } finally {
       setLoading(false);
     }
@@ -113,7 +134,6 @@ export function useDiscount({ type, navigate, discountId }) {
     if (!discountId) return bannerError("Missing discount ID");
 
     setLoading(true);
-    setBanner(null);
 
     try {
       const res = await fetch(DELETE_PATH, {
@@ -128,9 +148,10 @@ export function useDiscount({ type, navigate, discountId }) {
         return bannerError("Error deleting discount");
       }
 
+      showToast("Discount deleted", "success");
       navigate("/app");
-    } catch (e) {
-      bannerError(e.message);
+    } catch (error) {
+      bannerError(error.message);
     } finally {
       setLoading(false);
     }
@@ -138,7 +159,7 @@ export function useDiscount({ type, navigate, discountId }) {
 
   return {
     loading,
-    banner,
+    banner: null,
     setBanner,
     create,
     save,
