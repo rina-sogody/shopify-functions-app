@@ -1,11 +1,11 @@
+
 /* eslint-disable no-undef */
 import { useState, useEffect } from "react";
 import { useLoaderData, useNavigate } from "react-router";
 
 import { createDiscountLoader } from "./loaders/createDiscountLoader";
 import { useDiscount } from "./hooks/useDiscount";
-
-import Breadcrumbs from "../components/Breadcrumbs";
+import SButton from "../components/SButton";
 
 export const loader = createDiscountLoader("reject");
 
@@ -14,6 +14,7 @@ export default function RejectDiscountPage() {
   const { status, discountId, mode } = useLoaderData();
 
   const isEdit = mode === "edit";
+  const hasDiscount = isEdit && Boolean(status);
 
   const [message, setMessage] = useState("");
   const [title, setTitle] = useState(status?.title || "");
@@ -21,7 +22,6 @@ export default function RejectDiscountPage() {
 
   const {
     loading,
-    banner,
     setBanner,
     create,
     save,
@@ -33,8 +33,8 @@ export default function RejectDiscountPage() {
     discountId,
   });
 
-  const bannerError = (message) =>
-    setBanner({ message, tone: "critical" });
+  const bannerError = (msg) =>
+    setBanner({ message: msg, tone: "critical" });
 
   function validate() {
     if (!title?.trim()) {
@@ -46,15 +46,13 @@ export default function RejectDiscountPage() {
 
   function handleCreate() {
     if (!validate()) return;
-    create({
-      title,
-      settings: { message },
-    });
+    create({ title, settings: { message } });
   }
 
   function handleSave() {
     if (!validate()) return;
     save({
+      title,
       settings: { message },
       requestedStatus: isActive ? "ACTIVE" : "INACTIVE",
     });
@@ -74,7 +72,6 @@ export default function RejectDiscountPage() {
 
   useEffect(() => {
     if (!status?.metafield?.value) return;
-
     try {
       const parsed = JSON.parse(status.metafield.value);
       setMessage(parsed.message || "");
@@ -84,121 +81,109 @@ export default function RejectDiscountPage() {
   }, [status]);
 
   return (
-    <s-page backAction={{ content: "Discounts", url: "/app" }}>
-      <s-modal
-        id="delete-reject-discount-modal"
-        heading="Are you sure you want to delete this discount?"
-      >
-        <s-text>This action cannot be undone.</s-text>
+    <s-page heading={isEdit ? "Edit Reject Discounts" : "Create Reject Discounts"}>
+      <s-link slot="breadcrumb-actions" href="/app">Discounts</s-link>
 
-        <s-button
+      {isEdit && (
+        <>
+          <SButton
+            slot="secondary-actions"
+            onClick={() => handleToggle(isActive ? "INACTIVE" : "ACTIVE")}
+            disabled={loading}
+          >
+            {isActive ? "Deactivate" : "Activate"}
+          </SButton>
+
+          <SButton
+            slot="secondary-actions"
+            tone="critical"
+            commandFor="delete-reject-modal"
+            command="--show"
+            disabled={loading}
+          >
+            Delete
+          </SButton>
+        </>
+      )}
+
+      <SButton
+        slot="primary-action"
+        variant="primary"
+        onClick={isEdit ? handleSave : handleCreate}
+        disabled={loading}
+        loading={loading}
+      >
+        {isEdit ? "Save" : "Create"}
+      </SButton>
+
+      {/* Delete Modal */}
+      <s-modal id="delete-reject-modal" heading="Delete this discount blocker?">
+        <s-paragraph>
+          This action cannot be undone. The discount blocker will be permanently removed.
+        </s-paragraph>
+
+        <SButton
           slot="primary-action"
           variant="primary"
           tone="critical"
           loading={loading}
           onClick={handleDelete}
-          commandFor="delete-reject-discount-modal"
+          commandFor="delete-reject-modal"
           command="--hide"
         >
-          Yes
-        </s-button>
+          Delete
+        </SButton>
 
         <s-button
           slot="secondary-actions"
-          commandFor="delete-reject-discount-modal"
+          commandFor="delete-reject-modal"
           command="--hide"
         >
-          No
+          Cancel
         </s-button>
       </s-modal>
 
-      <Breadcrumbs />
+      {/* Info Section */}
+      <s-section heading="How it works">
+        <s-stack gap="base">
+          {hasDiscount && (
+            <s-badge tone={isActive ? "success" : "info"}>
+              {isActive ? "Active" : "Inactive"}
+            </s-badge>
+          )}
+          <s-paragraph>
+            When this blocker is active, all discount codes entered at checkout will be rejected. 
+            Use this during special promotions or flash sales where you do not want additional 
+            discounts applied on top of existing deals.
+          </s-paragraph>
+        </s-stack>
+      </s-section>
 
-      <s-section>
+      {/* Blocker Details */}
+      <s-section heading="Blocker details">
+        <s-text-field
+          label="Campaign name"
+          value={title}
+          disabled={loading}
+          onInput={(e) => setTitle(e.target.value)}
+          helpText="Internal name for this discount blocker campaign."
+        />
+      </s-section>
 
-        {banner && (
-          <div style={{ marginBottom: "16px" }}>
-            <s-banner
-              tone={banner.tone}
-              dismissible
-              onDismiss={() => setBanner(null)}
-            >
-              {banner.message}
-            </s-banner>
-          </div>
-        )}
-
-        <s-stack gap="200">
-          <div style={{ marginBottom: "10px "}}>
-            <div style={{ display: "flex", flexDirection: "row", gap: "10px" }}>
-              <s-heading variant="headingMd">Reject Discount</s-heading>
-              {isEdit && (
-                <s-badge tone={isActive ? "success" : "info"}>
-                  {isActive ? "Active" : "Inactive"}
-                </s-badge>
-              )}
-            </div>
-          </div>
-
-          <div style={{ marginBottom: "10px"}}>
-            <s-text-field
-              label="Reject discount name"
-              value={title.toString()}
-              disabled={loading}
-              onInput={(e) => setTitle(e.target.value)}
-            />
-          </div>
+      {/* Customer Message */}
+      <s-section heading="Customer message">
+        <s-stack gap="base">
+          <s-paragraph>
+            This message will be displayed when customers try to apply a discount code.
+          </s-paragraph>
 
           <s-text-field
-            label="Rejection message shown to customers"
+            label="Rejection message"
             value={message}
             disabled={loading}
             onInput={(e) => setMessage(e.target.value)}
+            placeholder="e.g., Discount codes cannot be used during this sale"
           />
-
-          <div style={{ margin: "10px 0" }}>
-            <s-text tone="subdued">
-              When active, all codes entered at checkout will be rejected.
-            </s-text>
-          </div>
-
-          {isEdit && (
-            <s-inline-stack gap="200" wrap>
-              <div style={{ display: "flex", gap: "10px", marginBottom: "10px" }}>
-                <s-button
-                  onClick={() => handleToggle("ACTIVE")}
-                  disabled={isActive || loading}
-                >
-                  Activate
-                </s-button>
-
-                <s-button
-                  onClick={() => handleToggle("DEACTIVE")}
-                  disabled={!isActive || loading}
-                >
-                  Deactivate
-                </s-button>
-
-                <s-button
-                  tone="critical"
-                  commandFor="delete-reject-discount-modal"
-                  command="--show"
-                  disabled={loading}
-                >
-                  Delete discount
-                </s-button>
-              </div>
-            </s-inline-stack>
-          )}
-
-          <div>
-            <s-button
-              onClick={isEdit ? handleSave : handleCreate}
-              disabled={loading}
-            >
-              {loading ? "Processing..." : isEdit ? "Save changes" : "Create"}
-            </s-button>
-          </div>
         </s-stack>
       </s-section>
     </s-page>

@@ -12,8 +12,8 @@ export function cartLinesDiscountsGenerateRun(input) {
     input.discount?.metafield?.value || "{}"
   );
 
-  const triggerSku = config.triggerSku?.toLowerCase();
-  const giftSku = config.giftSku?.toLowerCase();
+  const triggerSku = config.triggerSku?.sku.toLowerCase();
+  const giftSku = config.giftSku?.sku.toLowerCase();
 
   if (!triggerSku || !giftSku) {
     return { operations: [] };
