@@ -1,10 +1,11 @@
 /* eslint-disable no-undef */
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useLoaderData, useNavigate } from "react-router";
 
 import VariantSkuPicker from "../components/VariantSkuPicker";
 import { createDiscountLoader } from "./loaders/createDiscountLoader";
 import { useDiscount } from "./hooks/useDiscount";
+import SButton from "../components/SButton";
 
 export const loader = createDiscountLoader("freeGiftVariant");
 
@@ -52,24 +53,29 @@ export default function FreeGiftVariantPage() {
 
   const [title, setTitle] = useState(status?.title || "");
   const [isActive, setIsActive] = useState(status?.status === "ACTIVE");
+
   const [settings, setSettings] = useState({
     triggerSku: null,
     giftSku: null,
   });
 
-  const { loading, setBanner, create, save, toggleStatus, remove } = useDiscount({
-    type: "freeGiftVariant",
-    navigate,
-    discountId,
-  });
+  const { loading, setBanner, create, save, toggleStatus, remove } =
+    useDiscount({
+      type: "freeGiftVariant",
+      navigate,
+      discountId,
+    });
 
-  const bannerError = (message) => setBanner({ message, tone: "critical" });
+  const bannerError = useCallback(
+    (message) => setBanner({ message, tone: "critical" }),
+    [setBanner]
+  );
 
-  const updateSetting = (key, value) => {
+  const updateSetting = useCallback((key, value) => {
     setSettings((previous) => ({ ...previous, [key]: value }));
-  };
+  }, []);
 
-  function validate() {
+  const validate = useCallback(() => {
     if (!title?.trim()) {
       bannerError("Discount name is required");
       return false;
@@ -86,7 +92,7 @@ export default function FreeGiftVariantPage() {
     }
 
     return true;
-  }
+  }, [title, settings, bannerError]);
 
   useEffect(() => {
     if (!status?.metafield?.value) return;
@@ -106,58 +112,74 @@ export default function FreeGiftVariantPage() {
     }
   }, [status]);
 
-  function getFormattedSettings() {
+  const getFormattedSettings = useCallback(() => {
     return {
       triggerSku: settings.triggerSku || null,
       giftSku: settings.giftSku || null,
     };
-  }
+  }, [settings]);
 
-  function handleCreate() {
+  const handleCreate = useCallback(() => {
     if (!validate()) return;
-    create({ title, settings: getFormattedSettings() });
-  }
 
-  function handleSave() {
+    create({
+      title,
+      settings: getFormattedSettings(),
+    });
+  }, [validate, create, title, getFormattedSettings]);
+
+  const handleSave = useCallback(() => {
     if (!validate()) return;
+
     save({
       title,
       settings: getFormattedSettings(),
       requestedStatus: isActive ? "ACTIVE" : "INACTIVE",
     });
-  }
+  }, [validate, save, title, isActive, getFormattedSettings]);
 
-  function handleToggle(newStatus) {
-    toggleStatus({
-      settings: getFormattedSettings(),
-      newStatus,
-    });
+  const handleToggle = useCallback(
+    (newStatus) => {
+      toggleStatus({
+        settings: getFormattedSettings(),
+        newStatus,
+      });
 
-    setIsActive(newStatus === "ACTIVE");
-  }
+      setIsActive(newStatus === "ACTIVE");
+    },
+    [toggleStatus, getFormattedSettings]
+  );
 
-  function handleDelete() {
+  const handleDelete = useCallback(() => {
     remove();
-  }
+  }, [remove]);
 
   return (
-    <s-page heading={isEdit ? "Edit variant trigger discount" : "Create variant trigger discount"}>
+    <s-page
+      heading={
+        isEdit
+          ? "Edit variant trigger discount"
+          : "Create variant trigger discount"
+      }
+    >
       <s-link slot="breadcrumb-actions" href="/app">
         Discounts
       </s-link>
 
       {isEdit && (
         <>
-          <s-button
+          <SButton
             slot="secondary-actions"
             variant="secondary"
-            onClick={() => handleToggle(isActive ? "INACTIVE" : "ACTIVE")}
+            onClick={() =>
+              handleToggle(isActive ? "INACTIVE" : "ACTIVE")
+            }
             disabled={loading}
           >
             {isActive ? "Deactivate" : "Activate"}
-          </s-button>
+          </SButton>
 
-          <s-button
+          <SButton
             slot="secondary-actions"
             tone="critical"
             variant="secondary"
@@ -165,11 +187,11 @@ export default function FreeGiftVariantPage() {
             disabled={loading}
           >
             Delete
-          </s-button>
+          </SButton>
         </>
       )}
 
-      <s-button
+      <SButton
         slot="primary-action"
         variant="primary"
         onClick={isEdit ? handleSave : handleCreate}
@@ -177,7 +199,7 @@ export default function FreeGiftVariantPage() {
         loading={loading}
       >
         {isEdit ? "Save" : "Create"}
-      </s-button>
+      </SButton>
 
       <s-section heading="Overview">
         <s-stack gap="small-300">
@@ -196,7 +218,8 @@ export default function FreeGiftVariantPage() {
           />
 
           <s-paragraph color="subdued">
-            When the trigger variant is in cart, the gift variant is discounted by 100%.
+            When the trigger variant is in cart, the gift variant is
+            discounted by 100%.
           </s-paragraph>
         </s-stack>
       </s-section>
@@ -209,10 +232,17 @@ export default function FreeGiftVariantPage() {
             gap: "16px",
           }}
         >
-          <s-box padding="small-300" border="base" borderColor="base" borderRadius="base">
+          <s-box
+            padding="small-300"
+            border="base"
+            borderColor="base"
+            borderRadius="base"
+          >
             <s-stack gap="small-200">
               <s-text type="strong">Trigger variant</s-text>
-              <s-text color="subdued">Customer must have this in cart</s-text>
+              <s-text color="subdued">
+                Customer must have this in cart
+              </s-text>
 
               <VariantSkuPicker
                 compact
@@ -220,15 +250,24 @@ export default function FreeGiftVariantPage() {
                 value={settings.triggerSku}
                 disabled={loading}
                 onChange={(sku) => updateSetting("triggerSku", sku)}
-                onError={(message) => setBanner({ message, tone: "critical" })}
+                onError={(message) =>
+                  setBanner({ message, tone: "critical" })
+                }
               />
             </s-stack>
           </s-box>
 
-          <s-box padding="small-300" border="base" borderColor="base" borderRadius="base">
+          <s-box
+            padding="small-300"
+            border="base"
+            borderColor="base"
+            borderRadius="base"
+          >
             <s-stack gap="small-200">
               <s-text type="strong">Gift variant</s-text>
-              <s-text color="subdued">This item becomes free</s-text>
+              <s-text color="subdued">
+                This item becomes free
+              </s-text>
 
               <VariantSkuPicker
                 compact
@@ -236,7 +275,9 @@ export default function FreeGiftVariantPage() {
                 value={settings.giftSku}
                 disabled={loading}
                 onChange={(sku) => updateSetting("giftSku", sku)}
-                onError={(message) => setBanner({ message, tone: "critical" })}
+                onError={(message) =>
+                  setBanner({ message, tone: "critical" })
+                }
               />
             </s-stack>
           </s-box>
@@ -245,9 +286,15 @@ export default function FreeGiftVariantPage() {
 
       <s-section heading="Preview">
         <s-stack gap="small-100">
-          <s-text type="strong">{variantSummary(settings.triggerSku)}</s-text>
+          <s-text type="strong">
+            {variantSummary(settings.triggerSku)}
+          </s-text>
+
           <s-text color="subdued">triggers</s-text>
-          <s-text type="strong">{variantSummary(settings.giftSku)}</s-text>
+
+          <s-text type="strong">
+            {variantSummary(settings.giftSku)}
+          </s-text>
         </s-stack>
       </s-section>
     </s-page>

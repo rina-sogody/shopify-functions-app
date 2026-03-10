@@ -1,9 +1,11 @@
+
 /* eslint-disable no-undef */
 import { useState, useEffect } from "react";
 import { useLoaderData, useNavigate } from "react-router";
 
 import { createDiscountLoader } from "./loaders/createDiscountLoader";
 import { useDiscount } from "./hooks/useDiscount";
+import SButton from "../components/SButton";
 
 export const loader = createDiscountLoader("reject");
 
@@ -84,22 +86,43 @@ export default function RejectDiscountPage() {
 
       {isEdit && (
         <>
-          <s-button slot="secondary-actions" onClick={() => handleToggle(isActive ? "INACTIVE" : "ACTIVE")} disabled={loading}>
+          <SButton
+            slot="secondary-actions"
+            onClick={() => handleToggle(isActive ? "INACTIVE" : "ACTIVE")}
+            disabled={loading}
+          >
             {isActive ? "Deactivate" : "Activate"}
-          </s-button>
-          <s-button slot="secondary-actions" tone="critical" commandFor="delete-reject-modal" command="--show" disabled={loading}>
+          </SButton>
+
+          <SButton
+            slot="secondary-actions"
+            tone="critical"
+            commandFor="delete-reject-modal"
+            command="--show"
+            disabled={loading}
+          >
             Delete
-          </s-button>
+          </SButton>
         </>
       )}
-      <s-button slot="primary-action" variant="primary" onClick={isEdit ? handleSave : handleCreate} disabled={loading} loading={loading}>
+
+      <SButton
+        slot="primary-action"
+        variant="primary"
+        onClick={isEdit ? handleSave : handleCreate}
+        disabled={loading}
+        loading={loading}
+      >
         {isEdit ? "Save" : "Create"}
-      </s-button>
+      </SButton>
 
       {/* Delete Modal */}
       <s-modal id="delete-reject-modal" heading="Delete this discount blocker?">
-        <s-paragraph>This action cannot be undone. The discount blocker will be permanently removed.</s-paragraph>
-        <s-button
+        <s-paragraph>
+          This action cannot be undone. The discount blocker will be permanently removed.
+        </s-paragraph>
+
+        <SButton
           slot="primary-action"
           variant="primary"
           tone="critical"
@@ -109,7 +132,8 @@ export default function RejectDiscountPage() {
           command="--hide"
         >
           Delete
-        </s-button>
+        </SButton>
+
         <s-button
           slot="secondary-actions"
           commandFor="delete-reject-modal"
@@ -152,6 +176,7 @@ export default function RejectDiscountPage() {
           <s-paragraph>
             This message will be displayed when customers try to apply a discount code.
           </s-paragraph>
+
           <s-text-field
             label="Rejection message"
             value={message}
