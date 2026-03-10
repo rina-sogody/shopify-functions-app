@@ -183,7 +183,8 @@ export default function FreeGiftVariantPage() {
             slot="secondary-actions"
             tone="critical"
             variant="secondary"
-            onClick={handleDelete}
+            commandFor="delete-free-gift-variant-modal"
+            command="--show"
             disabled={loading}
           >
             Delete
@@ -297,6 +298,35 @@ export default function FreeGiftVariantPage() {
           </s-text>
         </s-stack>
       </s-section>
+
+      <s-modal
+        id="delete-free-gift-variant-modal"
+        heading="Delete this discount?"
+      >
+        <s-paragraph>
+          This action cannot be undone. The discount will be permanently removed.
+        </s-paragraph>
+
+        <SButton
+          slot="primary-action"
+          variant="primary"
+          tone="critical"
+          loading={loading}
+          onClick={handleDelete}
+          commandFor="delete-free-gift-variant-modal"
+          command="--hide"
+        >
+          Delete
+        </SButton>
+
+        <s-button
+          slot="secondary-actions"
+          commandFor="delete-free-gift-variant-modal"
+          command="--hide"
+        >
+          Cancel
+        </s-button>
+      </s-modal>
     </s-page>
   );
 }

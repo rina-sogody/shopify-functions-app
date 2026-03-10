@@ -286,7 +286,6 @@ export default function FlexDiscountPage() {
         {isEdit ? "Save" : "Create"}
       </SButton>
 
-      {/* 1. NAME */}
       <s-section heading="Name">
         <s-text-field
           label="Discount name"
@@ -297,13 +296,12 @@ export default function FlexDiscountPage() {
         />
       </s-section>
 
-      {/* 2. PRODUCTS */}
       <s-section heading="Products">
         <VariantSkuPicker
           label={
             selectedVariantCount
               ? `${selectedProductCount || selectedVariantCount} product(s), ${selectedVariantCount} variant(s) selected`
-              : "All products"
+              : "Select specific products to limit this discount. If products are selected, the discount applies only to those products. If no products are selected, the discount applies to all products."
           }
           value={settings.eligibleSkus}
           multiple
@@ -316,7 +314,6 @@ export default function FlexDiscountPage() {
         />
       </s-section>
 
-      {/* 3. TIERS */}
       <s-section heading="Tiers">
         {settings.tiers.length === 0 ? (
           <s-stack gap="base">
